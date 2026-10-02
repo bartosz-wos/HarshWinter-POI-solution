@@ -29,8 +29,11 @@
 //   G_m = [S_{m-1},l]  (road end).
 // An optimal day walks from p to some station S_s (cost |p-S_s|; charging at
 // the stations passed en route is free, so "walk straight to S_s" is optimal),
-// then sweeps monotonically, traversing gaps up to the final gap j, finishing
-// inside gap j, with every other gap a closed excursion.  So
+// then services the gaps outward from that station, traversing gaps up to the
+// final gap j, finishing inside gap j, with every other gap a closed excursion.
+// (NOT a monotone left-to-right sweep: the sample route is 3->2->0->2->4->5->4,
+// which goes left first.  What matters is that the gaps SPLIT at S_s, which is
+// what makes the cost additive.)  So
 //
 //     answer(p) = min_s ( |p - S_s| + C_s ),      C_s = day cost from S_s
 //

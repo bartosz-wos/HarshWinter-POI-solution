@@ -11,7 +11,7 @@ Bajtazar may stop anywhere. Output the minimum time for that day.
 
 With
 
-    f(g,k) = g + sum_{j>=1} max(0, g - j*k) = g + m*g - k*m*(m+1)/2,   m = (g-1)//k
+    f(g,k) = g + sum_{j=1..m} (g - j*k) = g + m*g - k*m*(m+1)/2,   m = (g-1)//k
 
 the exact cost of a gap of length `g` is:
 
@@ -23,9 +23,13 @@ the exact cost of a gap of length `g` is:
 | interior | pass through | `Ipass = g + 2(f(a) + f(b))`, `a = m'/2`, `b = m'-a`, `m' = max(0,g-k)` |
 | interior | finish inside | `Iopen = f(g)` |
 
-`f` is the cost of walking `g` clear metres starting with a full battery and
-never recharging: `g` seconds walking, plus the charge that expires unused
-before each of the `m` recharge boundaries.
+`f` is the cost of walking `g` clear metres starting with a full battery: `g`
+seconds of walking, plus `sum (g - j*k)` for `j = 1..m`, the distance still ahead
+at each of the `m` charge-block boundaries. `m = (g-1)//k` rather than `g//k`
+because it must count exactly those `j` with `g - j*k >= 1`; that is why no
+`max(0, .)` appears. (An earlier version of this file glossed the sum as "the
+charge that expires unused", which is `k + 2k + ... + mk` -- a different number
+entirely. For `g=5, k=2` the two are 4 and 6.)
 
 **`Iclose` is an even split, and that is a theorem, not a guess.** Minimising
 `f(a,k) + f(g-a,k)` over integer `a` is convex, so the optimum is the balanced

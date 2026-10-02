@@ -115,16 +115,30 @@ continuous walk and costs its length. Total $1 + 2 + 2 + 2 + 1 + 1 = 9$.])
 
 == 2. Pricing one gap
 
-Price a gap of length $g$, entered with a full battery, with no station inside. To \
-clear $g$ metres you walk $g$ metres, and each time a charge runs out you have \
-wasted whatever was left of the previous one. Put $m = floor((g - 1) / k)$; then $m$ \
-charge boundaries are crossed and the charge discarded is $k + 2k + dots + m k$, so
+Price a gap of length $g$, entered with a full battery, with no station inside. \
+The $g$ metres cost $g$ seconds to walk, and then there is the part that is easy \
+to get wrong.
 
-#eq[$ f(g, k) = g + sum_(j = 1)^m max(0, g - j k)
-  = g + m g - k m (m + 1) / 2 $]
+#eq[$ f(g, k) = g + sum_(j = 1)^m (g - j k) = g + m g - k m (m + 1) / 2,
+       quad m = floor((g - 1) / k) $]
 
-That is $O(1)$ in $g$, and $m$ can be $10^9$. At $k = 1$ it collapses to \
-$g (g + 1) / 2$, which is exactly where the 18-point $k = 1$ subtask comes from.
+Why that particular form, and not a prettier one? Because $m$ counts precisely the \
+$j$ for which $g - j k >= 1$, so no $max(0, .)$ ever fires and the sum closes in \
+$O(1)$ with $m$ possibly $10^9$. Had the index run to $floor(g/k)$ the last term \
+could be zero, and the floor would have to be written $floor((g-1)/k)$ anyway to \
+keep the triangular term integral.
+
+I do not have a one-sentence physical story for the sum, and I am not going to \
+invent one: an earlier draft here called it "the charge that expires unused", \
+which is $k + 2k + dots + m k$ -- a different number (for $g = 5, k = 2$ they are \
+4 and 6). What is not in doubt is the formula itself. It is read off the oracle, \
+reproduced by `figures/gen_numbers.cpp`, and the derived costs are checked against \
+exhaustive brute force by `tests/test_oracle_selfcheck.py`. A cost function that \
+can be written down correctly and verified is worth more than one that can be \
+explained prettily and not checked.
+
+At $k = 1$ this is $g + g(g-1)/2 = g(g+1)/2$, the triangular number, and that is \
+where the 18-point $k = 1$ subtask comes from.
 
 == 3. The five primitive costs
 
@@ -199,9 +213,12 @@ This is a *lower envelope of V-shapes*: one V centred on each working station. \
 Read on its own it is $O(n)$ per day, and $250\,000$ days would be $6 dot 10^10$ \
 operations. Everything else in this solution exists to make that fast.
 
-#fig("figures/fig-envelope.svg", [The envelope. Each faint dashed curve is one \
-station's V; the heavy curve is their minimum. The winner changes only at \
-stations -- and that is the structural fact the tree exploits.])
+#fig("figures/fig-envelope.svg", [The envelope, plotted from the #em[verified] \
+oracle rather than from chosen constants. Each faint dashed curve is one \
+station's V; the heavy curve is their minimum. It turns at stations (grey) *and* \
+strictly between them (orange), where the two lines $p + A_t$ and $-p + B_t$ cross \
+at $p = (B_t - A_t) / 2$. The official sample already shows this: on $[2, 5]$ the \
+curve turns at $p = 3$.])
 
 == 5. The reformulation
 

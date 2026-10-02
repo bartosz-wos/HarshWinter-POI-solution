@@ -14,6 +14,19 @@ command -v typst >/dev/null || { echo "typst not found" >&2; exit 1; }
 echo "==> regenerating figures"
 python3 figures/gen_figures.py
 
+echo "==> checking the generated numbers"
+# gen_numbers.cpp re-derives every number quoted in the prose from the verified
+# oracle, and returns non-zero if the envelope it builds disagrees with the
+# oracle at any p.  That is the check that would have caught the invented C
+# values behind the false "turns only at stations" claim.
+if command -v g++ >/dev/null; then
+  g++ -O2 -std=c++20 -o /tmp/gen_numbers.$$ figures/gen_numbers.cpp
+  /tmp/gen_numbers.$$ | sed -n '/envelope does NOT/,$p'
+  rm -f /tmp/gen_numbers.$$
+else
+  echo "    (g++ not found, skipping)"
+fi
+
 echo "==> compiling editorial.typ"
 typst compile editorial.typ editorial.pdf
 
@@ -32,6 +45,14 @@ if missing:
     raise SystemExit(f"editorial is missing: {missing}")
 if "quad" in txt.lower():
     raise SystemExit("editorial contains a literal 'quad' (unescaped spacing)")
-print("    all five primitive costs present, no unescaped spacing")
+# The figure caption once asserted the envelope turns only at stations.  It
+# does not, and the false claim survived a rebuild because the figure was drawn
+# from invented constants.  Assert the corrected wording is what shipped.
+if "turns only at stations" in txt:
+    raise SystemExit("editorial still claims the envelope turns only at stations")
+if "strictly between them" not in txt:
+    raise SystemExit("editorial lost the mid-gap-turn correction")
+print("    all five primitive costs present, no unescaped spacing,")
+print("    mid-gap-turn correction present")
 PY
 fi

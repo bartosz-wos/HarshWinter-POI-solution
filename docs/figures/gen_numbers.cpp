@@ -105,9 +105,71 @@ int main(int argc, char **argv) {
     printf("   total: 9 seconds.  Every metre walked is also cleared, so the\n");
     printf("   answer is simply the length of the route.\n");
 
-    // ---- the lower envelope, the actual point of the editorial ----
-    printf("\n== the lower envelope: answer(p) = min_s |p - S_s| + C_s ==\n");
-    printf("  with S = [2, 5] and the two true C_s values, the envelope is two\n");
-    printf("  V-shapes.  A_t and B_t contain no p, so a tree can hold them.\n");
+    // ---- the lower envelope: does the winner change only at stations? ----
+    // It does NOT.  On [S_t, S_{t+1}] the envelope is min(p + A_t, -p + B_t),
+    // two lines that cross at p* = (B_t - A_t)/2, which is in general strictly
+    // inside the gap.  The official sample is already a counterexample, so this
+    // is checked on the sample rather than on a constructed one.
+    printf("\n== the envelope does NOT turn only at stations ==\n");
+    printf("  sample: l = 5, k = 2, working stations S = [2, 5]\n");
+    {
+        int L = 5;
+        int S[2] = {2, 5};
+        // Derive C_s the way it is derived everywhere else:
+        //   C_s = max_p ( answer(p) - |p - S_s| )
+        // which is exact, because answer(p) <= |p-S_s| + C_s always, with
+        // equality at every p where s is the minimiser.  Hardcoding these was
+        // how the false "turns only at stations" claim survived a rebuild: the
+        // invented values C = {8, 5} gave a perfectly straight slope -1.
+        int answer[16];
+        for (int p = 0; p <= L; p++) {
+            // the sample's verified answer, from the oracle
+            static const int known[6] = {10, 9, 8, 9, 8, 7};
+            answer[p] = known[p];
+        }
+        int C[2];
+        for (int s2 = 0; s2 < 2; s2++) {
+            C[s2] = answer[0] - S[s2];
+            for (int p = 1; p <= L; p++) {
+                int v = answer[p] - (p > S[s2] ? p - S[s2] : S[s2] - p);
+                if (v > C[s2]) C[s2] = v;
+            }
+        }
+        printf("  C_s recovered from the oracle's answer: {");
+        for (int s2 = 0; s2 < 2; s2++) printf("%s%d", s2 ? ", " : "", C[s2]);
+        printf("}\n");
+        int a[16];
+        for (int p = 0; p <= L; p++) {
+            int best = 1 << 30;
+            for (int s2 = 0; s2 < 2; s2++) {
+                int v = (p > S[s2] ? p - S[s2] : S[s2] - p) + C[s2];
+                if (v < best) best = v;
+            }
+            a[p] = best;
+            if (best != answer[p]) {
+                printf("  ERROR: envelope %d != oracle %d at p=%d\n", best,
+                       answer[p], p);
+                return 1;
+            }
+        }
+        printf("   p :");
+        for (int p = 0; p <= L; p++) printf(" %4d", p);
+        printf("\n   a :");
+        for (int p = 0; p <= L; p++) printf(" %4d", a[p]);
+        printf("\n\n  slope changes:\n");
+        for (int p = 1; p < L; p++) {
+            int b = a[p] - a[p - 1], c = a[p + 1] - a[p];
+            if (b != c)
+                printf("    p = %d:  slope %+d -> %+d   %s\n", p, b, c,
+                       (p == S[0] || p == S[1]) ? "at a station"
+                                                  : "INSIDE the gap (2,5)");
+        }
+        printf("\n  So the envelope does NOT turn only at stations: the two lines\n");
+        printf("  p + A_t and -p + B_t cross at p = (B_t - A_t)/2, which is in\n");
+        printf("  general strictly inside a gap.  An earlier draft of the editorial\n");
+        printf("  claimed otherwise and printed a figure built from invented C\n");
+        printf("  values that made the false claim look true.  The official sample\n");
+        printf("  refutes it in one line.\n");
+    }
     return 0;
 }

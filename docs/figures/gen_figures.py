@@ -246,6 +246,40 @@ def envelope_svg(name, l, S, C, ps, width=880, height=330, title=None,
             f'font-weight="700" fill="{WARN}" text-anchor="middle">'
             f'p={q}</text>')
 
+    # Turning points.  The ones that fall strictly between two stations are the
+    # interesting case -- they are where the two lines p + A_t and -p + B_t
+    # swap over -- so they are drawn in the warning colour and called out.
+    pts = [l * i / 2000.0 for i in range(2001)]
+    kinks = []
+    for i in range(1, len(pts) - 1):
+        a, b, c = f(pts[i - 1]), f(pts[i]), f(pts[i + 1])
+        if abs((b - a) - (c - b)) > 1e-9:
+            kinks.append(pts[i])
+    merged = []
+    for kp in kinks:
+        if not merged or kp - merged[-1] > 0.5:
+            merged.append(kp)
+    for kp in merged:
+        at_station = any(abs(kp - s) < 0.5 for s in S)
+        col = DIM if at_station else WARN
+        out.append(
+            f'<circle cx="{X(kp)}" cy="{Y(f(kp))}" r="4" fill="{col}" '
+            f'stroke="#ffffff" stroke-width="1.4"/>')
+    # legend
+    lx, ly = pad_l + 6, pad_t + 14
+    out.append(
+        f'<circle cx="{lx}" cy="{ly-4}" r="4" fill="{DIM}" '
+        f'stroke="#ffffff" stroke-width="1.4"/>')
+    out.append(
+        f'<text x="{lx+11}" y="{ly}" font-size="11" fill="{DIM}">'
+        f'turn at a station</text>')
+    out.append(
+        f'<circle cx="{lx+140}" cy="{ly-4}" r="4" fill="{WARN}" '
+        f'stroke="#ffffff" stroke-width="1.4"/>')
+    out.append(
+        f'<text x="{lx+151}" y="{ly}" font-size="11" fill="{WARN}">'
+        f'turn inside a gap</text>')
+
     if note:
         out.append(
             f'<text x="{pad_l}" y="{height-13}" font-size="11.5" '
@@ -283,13 +317,21 @@ def main():
         height=230,
     )
 
+    # C_s and the queried p are the REAL values recovered from the verified
+    # oracle (reference/day_model.py), not hand-picked: C_s = max_p (answer(p) -
+    # |p - S_s|), which reproduces answer(p) at every p.  An earlier version
+    # used invented C values that made the envelope turn only at stations, and
+    # the caption then said something the real curve contradicts -- the two
+    # lines min(p + A_t, -p + B_t) cross at p* = (B_t - A_t)/2, which is in
+    # general strictly inside a gap.  The sample alone shows it: p = 3 between
+    # stations 2 and 5.
     envelope_svg(
         "fig-envelope.svg", l=12, S=[1, 4, 7, 10],
-        C=[9, 6, 7, 10], ps=[3, 8],
+        C=[19, 20, 21, 20], ps=[3, 6],
         title="answer(p) = min over s of ( |p - S_s| + C_s )  --  a lower envelope of V-shapes",
-        note="Between two consecutive stations the envelope is exactly two "
-             "lines, min(p + A_t, -p + B_t).  A_t and B_t do not depend on p, "
-             "so a segment tree can hold them.",
+        note="Inside a gap the envelope is exactly two lines, min(p + A_t, -p + B_t); "
+             "they cross at (B_t - A_t)/2, which need not be a station.  A_t and "
+             "B_t contain no p, so a segment tree can hold them.",
     )
 
     road_svg(
