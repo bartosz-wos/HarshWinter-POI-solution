@@ -38,11 +38,22 @@ int main(int argc, char** argv){
     for(long long i=0;i<n;i++) put(xs[i], i+1==n?'\n':' ');
     vector<char> ok(n,1);
     vector<long long> z, u;
+    // The statement caps sum over days of (z_i + u_i) at 500000.  This
+    // generator previously allowed up to 6 changes a day with no global cap,
+    // so at d = 250000 it emitted 1 499 965 -- an input the grader would never
+    // produce and one that measures the wrong thing.  The budget is shared
+    // across the whole run, so a long run simply spreads the same allowance
+    // over more days instead of accumulating.
+    const long long ZUMAX = 500000;
+    long long budget = ZUMAX;
     for(long long day=0; day<d; ++day){
         long long p = (long long)(rng() % (unsigned long long)(L+1));
         z.clear(); u.clear();
-        for(long long i=0;i<n && (long long)z.size()<3;i++) if(!ok[i] && (rng()%100)<40) z.push_back(i);
-        for(long long i=0;i<n && (long long)u.size()<3;i++) if(ok[i] && (rng()%100)<40) u.push_back(i);
+        long long room = max(0LL, min(6LL, budget));
+        for(long long i=0;i<n && (long long)z.size()<room && (long long)(z.size()+u.size())<room;i++)
+            if(!ok[i] && (rng()%100)<40) z.push_back(i);
+        for(long long i=0;i<n && (long long)u.size()<room && (long long)(z.size()+u.size())<room;i++)
+            if(ok[i] && (rng()%100)<40) u.push_back(i);
         // never break the last working station
         {   long long working=0; for(long long i=0;i<n;i++) if(ok[i]) working++;
             for(long long i=0;i<n;i++) if(ok[i]) working--;
@@ -56,6 +67,7 @@ int main(int argc, char** argv){
         if(u.empty()) out += '\n';
         for(long long i: z) ok[i]=1;
         for(long long i: u) ok[i]=0;
+        budget -= (long long)(z.size() + u.size());
     }
     fwrite(out.data(),1,out.size(),stdout);
     return 0;

@@ -63,7 +63,9 @@ int main() {
     // different states a worker would have to reconstruct, i.e. the work that
     // cannot be skipped.
     printf("\nA thread cannot start day k without having applied days 1..k-1.\n");
-    printf("With %lld updates spread over %d days and the active set ranging\n", 1499965LL, d);
+    // 500 000 is the statement's cap on sum(z+u); the earlier figure of
+    // 1 499 965 came from a generator that ignored it and was not a legal input.
+    printf("With %lld updates spread over %d days and the active set ranging\n", 500000LL, d);
     printf("over [%d,%d], there is no state to jump to and reuse.\n", minActive, maxActive);
     return 0;
 }

@@ -121,8 +121,12 @@ if [ "$MODE" != "quick" ]; then
 
   run "full-constraint run at the statement's limits" bash -c '
     ./build/gen_random 250000 250000 1000000000 999999 7 > /tmp/sur_full.in
+    # The input must satisfy every statement constraint before its timings mean
+    # anything: gen_random once emitted 1 499 965 updates against a 500 000 cap,
+    # so this measured an input the grader would never produce.
+    ./build/validate_input /tmp/sur_full.in
     /usr/bin/time -f "  time %e s, peak RSS %M KB" ./build/sur < /tmp/sur_full.in > /tmp/sur_full.out
-    echo "  answers: $(wc -l < /tmp/sur_full.out)"'
+    echo "  answers: $(wc -l < /tmp/sur_full.out)"' 
 
   # The bitmap variant must be a real speedup, not just a different spelling of
   # the same work.  Timing is noisy on a shared box, so require only a margin

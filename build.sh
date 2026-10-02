@@ -17,6 +17,7 @@ $CXX $FLAGS -o build/sur_segtree      reference/sur_segtree.cpp
 
 echo "==> building generators"
 $CXX $FLAGS -o build/gen_random       generators/gen_random.cpp
+$CXX $FLAGS -o build/validate_input   generators/validate_input.cpp
 $CXX $FLAGS -o build/gen_stress       generators/gen_stress.cpp
 
 echo "==> building proof programs"

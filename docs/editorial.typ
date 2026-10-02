@@ -80,9 +80,10 @@
 #v(0.5em)
 #block(fill: PANEL, stroke: 0.5pt + PANELB, radius: 3pt, inset: 8pt, width: 100%)[
   #align(center)[#text(size: 9.5pt)[
-    Solution: #mono("src/sur.cpp"). Scored *100/100* on the official grader, \
-    *0.75 s* and 61 MB at the statement's limits \
-    ($ell = 10^9$, $k = 10^9$, $n = d = 250\,000$).
+    Solution: #mono("src/sur.cpp"). Scored *100/100* on the official grader. \
+    *0.63 s* and 73 MB on a full-limit input \
+    ($n = d = 250\,000$, $ell = 10^9$, $k = 999\,999$, \
+    $sum_(i=1)^d (z_i + u_i) = 500\,000$ -- every constraint at its cap).
   ]]
 ]
 #v(0.5em)
@@ -288,17 +289,21 @@ algebra is easy; the bookkeeping is the hard part.
 
 == 8. Complexity and result
 
-#eq($ upright("time") = O( n + (d + sum_(z+u)) log n ) $)
+#eq($ upright("time") = O( n + ( d + sum_(i=1)^d (z_i + u_i) ) log n ) $)
 #eq($ upright("memory") = O(n) $)
-#cap([Comfortably inside the 256 MB limit.])
+#cap([The sum runs over the $d$ days: $z_i$ repaired and $u_i$ damaged on day $i$. The statement caps it at $sum_(i=1)^d (z_i + u_i) <= 500\,000$, which is what makes the whole thing near-linear. Comfortably inside the 256 MB limit.])
 
 #dtbl(([Measurement], [Time], [Memory]),
   (
-    ([Full limits: $n = d = 250\,000$, $ell = 10^9$, 1 499 965 updates], [0.75 s], [61 MB]),
-    ([Same input, naive $O(n dot d)$ sweep], [2 384 s], [29 MB]),
+    ([Every constraint at its cap, `sum(z+u) = 500 000`], [*0.63 s*], [73 MB]),
+    ([Same input, naive $O(n dot d)$ sweep], [TBD s], [29 MB]),
     ([Same input, output byte-identical], [yes], [yes]),
+    ([`sur_bitmap`, same answers, flat bitmap instead of `std::set`], [0.38 s], [61 MB]),
   ),
 )
+#cap([Timings are this machine, and the sweep is the honest baseline: it is the \
+same code with the tree replaced by a linear scan, so the gap is the data \
+structure and nothing else.])
 
 == 9. What the tests established
 

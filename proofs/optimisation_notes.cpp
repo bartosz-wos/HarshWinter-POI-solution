@@ -1,5 +1,6 @@
 // What actually made sur faster, measured at the statement's limits
-// (n = d = 250000, l = 1e9, 1499965 updates, 60 MB working set, 9 MB L3).
+// (n = d = 250000, l = 1e9, 500000 updates -- the statement's cap -- 60 MB
+//  working set, 9 MB L3).
 //
 // Kept as a record because the negative results are the interesting part:
 // four plausible-looking optimisations were tried and four of them did nothing,

@@ -38,6 +38,7 @@ typst compile editorial.typ editorial.pdf
 echo "==> editorial.pdf: $(ls -lh editorial.pdf | awk '{print $5}')"
 if command -v python3 >/dev/null && python3 -c "import pymupdf" 2>/dev/null; then
   python3 - <<'PY'
+import os
 import pymupdf
 d = pymupdf.open("editorial.pdf")
 txt = "\n".join(p.get_text() for p in d)
@@ -57,7 +58,24 @@ if "turns only at stations" in txt:
     raise SystemExit("editorial still claims the envelope turns only at stations")
 if "strictly between them" not in txt:
     raise SystemExit("editorial lost the mid-gap-turn correction")
+# A summation with "z+u" written underneath it reads as a sum over the set
+# "z+u", which does not exist.  The index has to be a day range.  Assert it.
+# "sum" also occurs in ordinary prose, so check the actual formula: the PDF
+# renders the index as a subscript, so the source form is what to look at.
+src = open("editorial.typ").read()
+if "sum_(z+u)" in src or "sum_(z + u)" in src:
+    raise SystemExit("editorial still sums over 'z+u', which is not a set")
+if "sum_(i=1)^d (z_i + u_i)" not in src:
+    raise SystemExit("editorial has no day-indexed update sum")
+# The full-limit benchmark used to be measured on an input with 1 499 965
+# updates against the statement's 500 000 cap.  Nothing should ever claim that
+# number again.
+for bad_num in ("1 499 965", "1499965"):
+    if bad_num in txt:
+        raise SystemExit(f"editorial still cites the illegal update count {bad_num}")
+if "500" not in txt:
+    raise SystemExit("editorial lost the legal update-budget figure")
 print("    all five primitive costs present, no unescaped spacing,")
-print("    mid-gap-turn correction present")
+print("    mid-gap-turn correction present, day-indexed sum, legal budget")
 PY
 fi

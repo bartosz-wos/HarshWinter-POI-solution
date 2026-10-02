@@ -7,11 +7,15 @@ segment must be cleared, and Bajtazar may finish anywhere. Print the minimum
 time per day.
 
 ```
-O(n + (d + sum(z+u)) log n) time,  O(n) memory
+O(n + (d + sum_{i=1..d} (z_i + u_i)) log n) time,  O(n) memory
 ```
 
+`z_i` and `u_i` are the numbers of stations repaired and damaged on day `i`;
+the sum runs over the `d` days and the statement caps it at 500 000.
+
 `sur.cpp` runs the statement's maximum constraints (n = d = 250 000,
-l = 10^9) in **1.26 s / 71 MB** against a 256 MB limit.
+l = 10^9, `sum(z_i + u_i)` = 500 000) in **0.63 s / 73 MB** against a 256 MB
+limit.
 
 ## Build and run
 
@@ -29,7 +33,7 @@ Only `g++` (C++20) and `python3` are needed. No network, no dependencies.
 | Path | What it is |
 |---|---|
 | `src/sur.cpp` | **the submission** — one segment tree, O(log n) per day |
-| `src/sur_bitmap.cpp` | same algorithm and same answers, active set in a flat bitmask: **1.35 s → 0.79 s** |
+| `src/sur_bitmap.cpp` | same algorithm and same answers, active set in a flat bitmask: **0.63 s → 0.38 s** on the same full-limit input |
 | `reference/sur_sweep.cpp` | slow O(n·d) sweep, ground truth for differential tests |
 | `reference/sur_segtree.cpp` | the O(n)-per-day tree variant of the same model |
 | `reference/oracle.py` | literal state-space brute force — the referee |
