@@ -1,0 +1,18 @@
+# build artefacts
+build/
+*.o
+*.out
+
+# generated test inputs (large; regenerate with generators/)
+/tmp_*.in
+scratch/
+*.log
+
+# editor / OS noise
+*~
+.DS_Store
+compile_commands.json
+
+# python
+__pycache__/
+*.pyc
