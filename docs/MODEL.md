@@ -46,11 +46,18 @@ Recharging is free at every working station, so the walk to the *first* station
 touched accrues no clearing cost at all — it is pure travel, and the shortest
 path from `p` to `S_s` is the segment between them. Any detour only adds travel.
 
-**Consequence.** An optimal day touches a first station `S_s`, then sweeps
-monotonically, treating every gap it crosses as a closed excursion and finishing
-inside one gap. So
+**Consequence.** An optimal day touches a first station `S_s`, and the gaps
+*split* at that station: those on one side are serviced from it, and the day
+finishes inside the last gap it reaches. So
 
     answer(p) = min_s ( |p - S_s| + C_s )
+
+Note this is NOT a claim that the day is a monotone left-to-right sweep. The
+official sample route is `3 -> 2 -> 0 -> 2 -> 4 -> 5 -> 4`: it goes **left** to
+the road end first, comes back, and only then goes right. Writing it up as a
+monotone sweep is a tempting simplification and it is wrong; an early draft of
+this file asserted it, and the sample's own route refutes it in one line. The
+useful content of the claim is the additivity, not the direction.
 
 where `C_s` is the day cost starting at `S_s` with a full battery.
 

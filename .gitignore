@@ -3,6 +3,9 @@ build/
 *.o
 *.out
 
+# the editorial PDF is generated from editorial.typ by docs/build_editorial.sh
+docs/editorial.pdf
+
 # generated test inputs (large; regenerate with generators/)
 /tmp_*.in
 scratch/

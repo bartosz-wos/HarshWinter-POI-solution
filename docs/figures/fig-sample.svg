@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="300" viewBox="0 0 880 300" font-family="DejaVu Sans, Helvetica, Arial, sans-serif"><rect width="880" height="300" fill="#ffffff"/>
+<text x="74.0" y="26" font-size="15" font-weight="600" fill="#1a1a2e">The official sample:  l = 5,  k = 2,  station 2 (at x = 3) is broken</text>
+<line x1="74.0" y1="122.0" x2="806.0" y2="122.0" stroke="#374151" stroke-width="4" stroke-linecap="round"/>
+<line x1="74.0" y1="107.0" x2="74.0" y2="137.0" stroke="#6b7280" stroke-width="1.6"/>
+<text x="74.0" y="154.0" font-size="12" fill="#6b7280" text-anchor="middle">0</text>
+<line x1="806.0" y1="107.0" x2="806.0" y2="137.0" stroke="#6b7280" stroke-width="1.6"/>
+<text x="806.0" y="154.0" font-size="12" fill="#6b7280" text-anchor="middle">5</text>
+<rect x="74.0" y="116.0" width="292.8" height="12" fill="#93c5fd" opacity="0.30"/>
+<rect x="366.8" y="116.0" width="439.2" height="12" fill="#93c5fd" opacity="0.30"/>
+<rect x="361.3" y="78.0" width="11" height="17" rx="2" fill="#0d9488"/>
+<text x="366.8" y="71.0" font-size="12.5" font-weight="700" fill="#0d9488" text-anchor="middle">1</text>
+<line x1="506.70000000000005" y1="78.0" x2="519.7" y2="93.0" stroke="#dc2626" stroke-width="2.6"/>
+<line x1="506.70000000000005" y1="93.0" x2="519.7" y2="78.0" stroke="#dc2626" stroke-width="2.6"/>
+<text x="513.2" y="71.0" font-size="12.5" font-weight="700" fill="#dc2626" text-anchor="middle">2</text>
+<rect x="800.5" y="78.0" width="11" height="17" rx="2" fill="#0d9488"/>
+<text x="806.0" y="71.0" font-size="12.5" font-weight="700" fill="#0d9488" text-anchor="middle">3</text>
+<line x1="513.2" y1="107.0" x2="513.2" y2="62.0" stroke="#2563eb" stroke-width="1.4" stroke-dasharray="3 3"/>
+<circle cx="513.2" cy="54.0" r="7" fill="#2563eb"/>
+<text x="513.2" y="50.0" font-size="11" font-weight="700" fill="#ffffff" text-anchor="middle">p</text>
+<text x="513.2" y="37.0" font-size="11.5" font-weight="700" fill="#2563eb" text-anchor="middle">start</text>
+<line x1="513.2" y1="130.0" x2="513.2" y2="210.0" stroke="#2563eb" stroke-width="0.9" stroke-dasharray="2 4" opacity="0.55"/>
+<line x1="513.2" y1="210.0" x2="366.8" y2="210.0" stroke="#2563eb" stroke-width="2.4"/>
+<path d="M 366.8 210.0 L 373.8 205.4 L 373.8 214.6 Z" fill="#2563eb"/>
+<circle cx="513.2" cy="210.0" r="8.5" fill="#2563eb"/>
+<text x="513.2" y="213.8" font-size="10" font-weight="700" fill="#ffffff" text-anchor="middle">1</text>
+<text x="440.0" y="197.0" font-size="11.5" font-weight="600" fill="#2563eb" text-anchor="middle">1 s</text>
+<line x1="366.8" y1="130.0" x2="366.8" y2="254.0" stroke="#2563eb" stroke-width="0.9" stroke-dasharray="2 4" opacity="0.55"/>
+<line x1="366.8" y1="254.0" x2="74.0" y2="254.0" stroke="#2563eb" stroke-width="2.4"/>
+<path d="M 74.0 254.0 L 81.0 249.4 L 81.0 258.6 Z" fill="#2563eb"/>
+<circle cx="366.8" cy="254.0" r="8.5" fill="#2563eb"/>
+<text x="366.8" y="257.8" font-size="10" font-weight="700" fill="#ffffff" text-anchor="middle">2</text>
+<text x="220.4" y="241.0" font-size="11.5" font-weight="600" fill="#2563eb" text-anchor="middle">2 s</text>
+<line x1="74.0" y1="130.0" x2="74.0" y2="210.0" stroke="#2563eb" stroke-width="0.9" stroke-dasharray="2 4" opacity="0.55"/>
+<line x1="74.0" y1="210.0" x2="366.8" y2="210.0" stroke="#2563eb" stroke-width="2.4"/>
+<path d="M 366.8 210.0 L 359.8 205.4 L 359.8 214.6 Z" fill="#2563eb"/>
+<circle cx="74.0" cy="210.0" r="8.5" fill="#2563eb"/>
+<text x="74.0" y="213.8" font-size="10" font-weight="700" fill="#ffffff" text-anchor="middle">3</text>
+<text x="220.4" y="197.0" font-size="11.5" font-weight="600" fill="#2563eb" text-anchor="middle">2 s</text>
+<line x1="366.8" y1="130.0" x2="366.8" y2="254.0" stroke="#2563eb" stroke-width="0.9" stroke-dasharray="2 4" opacity="0.55"/>
+<line x1="366.8" y1="254.0" x2="659.6" y2="254.0" stroke="#2563eb" stroke-width="2.4"/>
+<path d="M 659.6 254.0 L 652.6 249.4 L 652.6 258.6 Z" fill="#2563eb"/>
+<circle cx="366.8" cy="254.0" r="8.5" fill="#2563eb"/>
+<text x="366.8" y="257.8" font-size="10" font-weight="700" fill="#ffffff" text-anchor="middle">4</text>
+<text x="513.2" y="241.0" font-size="11.5" font-weight="600" fill="#2563eb" text-anchor="middle">2 s</text>
+<line x1="659.6" y1="130.0" x2="659.6" y2="210.0" stroke="#2563eb" stroke-width="0.9" stroke-dasharray="2 4" opacity="0.55"/>
+<line x1="659.6" y1="210.0" x2="806.0" y2="210.0" stroke="#2563eb" stroke-width="2.4"/>
+<path d="M 806.0 210.0 L 799.0 205.4 L 799.0 214.6 Z" fill="#2563eb"/>
+<circle cx="659.6" cy="210.0" r="8.5" fill="#2563eb"/>
+<text x="659.6" y="213.8" font-size="10" font-weight="700" fill="#ffffff" text-anchor="middle">5</text>
+<text x="732.8" y="197.0" font-size="11.5" font-weight="600" fill="#2563eb" text-anchor="middle">1 s</text>
+<line x1="806.0" y1="130.0" x2="806.0" y2="254.0" stroke="#2563eb" stroke-width="0.9" stroke-dasharray="2 4" opacity="0.55"/>
+<line x1="806.0" y1="254.0" x2="659.6" y2="254.0" stroke="#2563eb" stroke-width="2.4"/>
+<path d="M 659.6 254.0 L 666.6 249.4 L 666.6 258.6 Z" fill="#2563eb"/>
+<circle cx="806.0" cy="254.0" r="8.5" fill="#2563eb"/>
+<text x="806.0" y="257.8" font-size="10" font-weight="700" fill="#ffffff" text-anchor="middle">6</text>
+<text x="732.8" y="241.0" font-size="11.5" font-weight="600" fill="#2563eb" text-anchor="middle">1 s</text>
+<text x="74.0" y="286" font-size="11.5" fill="#6b7280">Every leg walked is also cleared, so the total is just the length of the walk:  1+2+2+2+1+1 = 9.</text>
+</svg>

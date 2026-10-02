@@ -49,6 +49,14 @@ done
 echo "== building"
 ./build.sh >/dev/null || { echo "build failed"; exit 1; }
 
+# The editorial is part of the repository, so it is built and checked like any
+# other artifact.  It is skipped, not failed, where typst is not installed.
+if command -v typst >/dev/null; then
+  run "editorial builds and is not silently truncated" bash -c './docs/build_editorial.sh'
+else
+  echo "-- editorial: SKIP (typst not installed)"
+fi
+
 run "sample" bash -c './build/sur < tests/sample.in | grep -qx 9'
 
 run "the test suite can actually fail" python3 tests/test_harness_can_fail.py
