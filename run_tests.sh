@@ -114,8 +114,20 @@ if [ "$MODE" != "quick" ]; then
   run "full-constraint run at the statement's limits" bash -c '
     ./build/gen_random 250000 250000 1000000000 999999 7 > /tmp/sur_full.in
     /usr/bin/time -f "  time %e s, peak RSS %M KB" ./build/sur < /tmp/sur_full.in > /tmp/sur_full.out
-    echo "  answers: $(wc -l < /tmp/sur_full.out)"
-    rm -f /tmp/sur_full.in /tmp/sur_full.out'
+    echo "  answers: $(wc -l < /tmp/sur_full.out)"'
+
+  # The bitmap variant must be a real speedup, not just a different spelling of
+  # the same work.  Timing is noisy on a shared box, so require only a margin
+  # well below the 1.7x actually measured, and reuse the input built above.
+  run "sur_bitmap is faster than sur at the limits" bash -c '
+    t0=$( { /usr/bin/time -f %e ./build/sur        < /tmp/sur_full.in > /dev/null; } 2>&1 )
+    t1=$( { /usr/bin/time -f %e ./build/sur_bitmap < /tmp/sur_full.in > /dev/null; } 2>&1 )
+    echo "  sur (std::set) ${t0} s   sur_bitmap ${t1} s"
+    awk -v a="$t0" -v b="$t1" "BEGIN{ exit !(b < a*0.85) }" || {
+      echo "  sur_bitmap is not meaningfully faster"; exit 1; }
+    awk -v a="$t0" -v b="$t1" "BEGIN{ printf \"  speedup %.2fx\\n\", a/b }"'
+
+  run "cleanup full-limit scratch" bash -c 'rm -f /tmp/sur_full.in /tmp/sur_full.out'
 fi
 
 echo

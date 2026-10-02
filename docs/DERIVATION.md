@@ -101,6 +101,61 @@ measure.
 `generators/validate_input.py` exists for exactly this, and it is worth running
 on any generated input *before* believing any downstream mismatch.
 
+## Phase 8 — why this is single-threaded, and what made it fast instead
+
+Asked whether the solver could be made multithreaded, the honest answer is no,
+and the profile is what proves it rather than a guess.
+
+`proofs/phase_profile.cpp` splits the 1.28 s at the statement's limits:
+
+    read file          5 ms
+    tokenise          23 ms
+    setup x[]          9 ms
+    build tree        44 ms
+    days+queries    1200 ms      <-- 94%
+
+Turning the per-day queries off inside the day loop separates the rest:
+
+    point updates    ~940 ms      <-- 74% of everything
+    the two queries  ~260 ms
+    1 499 965 updates over 250 000 days, ~6 per day
+
+Day *i*'s answer depends on the active set produced by every repair and breakage
+on days 1..*i*. The days are one long dependency chain: no thread can start day
+*k* without first applying days 1..*k-1*, and the two range queries read the very
+tree the next day's updates mutate. `p` comes from the input, never from a
+previous answer, so there is no data to speculate on either — a speculative
+thread would have to guess a state the active set never revisits. With 74% of
+the work serial, Amdahl puts a 6-thread ceiling at about 1.05x. 99% of wall time
+is user time on one core, so it is not I/O either.
+
+What did pay off was `std::set`. The active set was a red-black tree, and each
+update walks it for a predecessor and a successor, then the segment tree walks
+~19 levels for the three changed leaves — all pointer chasing through a
+72 MB working set. Replacing it with a flat two-level bitmask (`src/sur_bitmap.cpp`:
+one `uint64` per 64 slots, plus a summary word per 64 words) makes every
+operation a handful of register and L1 operations.
+
+    sur   (std::set)   1.35 s   72.6 MB
+    sur_bitmap         0.79 s   60.9 MB     1.71x, byte-identical output
+
+Two bugs were caught on the way, both by the sample printing the wrong number:
+
+  - `act.prev(slot)` returns the largest active slot <= slot, which INCLUDES
+    slot itself. The original's `lower_bound` then `*prev(it)` was a strict
+    predecessor. The 68 706-case oracle test caught this; reasoning about it did
+    not.
+  - an early `return` in the "station is broken" branch of `refresh()` skipped
+    the walk to the root, so every ancestor of an emptied leaf kept the old
+    value. Identical inputs, identical active set, identical leaves after build
+    — and a different answer, because the internal nodes above the emptied leaf
+    were stale. Dumping the whole tree node by node located it in one step;
+    two rounds of reasoning about it did not.
+
+`proofs/batch_test.cpp` also tested batching the three leaf rebuilds per update
+into a single bottom-up pass: correct, and about 1.5x on the update phase, but
+subsumed by the bitmap and not worth the extra code.
+
 ## Phase 7 — the tests that could not fail
 
 Moving the work into a repository exposed a defect the numbers had been hiding.

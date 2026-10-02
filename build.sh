@@ -10,6 +10,8 @@ FLAGS="-O2 -std=c++20 -Wall -Wextra"
 
 echo "==> building submission and references"
 $CXX $FLAGS -o build/sur              src/sur.cpp
+$CXX $FLAGS -o build/sur_bitmap       src/sur_bitmap.cpp
+$CXX $FLAGS -o build/sur_bitmap       src/sur_bitmap.cpp
 $CXX $FLAGS -o build/sur_sweep        reference/sur_sweep.cpp
 $CXX $FLAGS -o build/sur_segtree      reference/sur_segtree.cpp
 

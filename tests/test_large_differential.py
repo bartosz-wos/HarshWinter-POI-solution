@@ -42,6 +42,16 @@ for (n, d, L, k, seed) in cases:
     data = gen(n, d, L, k, seed)
     fast = run("sur", data)
     la = fast.split()
+    # The bitmap variant must agree with the submission on every input,
+    # including the large ones where the O(n*d) sweep is skipped.
+    bm = run("sur_bitmap", data)
+    if bm != fast:
+        bad += 1
+        print(f"  DIFFER (sur vs sur_bitmap) n={n} d={d} L={L} k={k} seed={seed}")
+        for idx, (x, y) in enumerate(zip(fast.split(), bm.split())):
+            if x != y:
+                print(f"    first diff at day {idx}: sur={x} sur_bitmap={y}")
+                break
     if n * d > 40_000_000:          # too slow to be worth running O(n*d)
         skipped += 1
         print(f"  ok n={n:>6} d={d:>4} L={L:>10} k={k:>10}  "

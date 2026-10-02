@@ -51,9 +51,16 @@ for trial in range(400):
         want.append(day_O_n(L, k, W, p) if W else 0)
     src = "\n".join(lines) + "\n"
     g0 = run("sur", src)          # the submission
+    gb = run("sur_bitmap", src)   # same algorithm, flat-bitmap active set
     g1 = run("sur_sweep", src)
     g2 = run("sur_segtree", src)
     total += len(want)
+    if gb != want:
+        bad += 1
+        if bad <= 6:
+            print(f"  sur_bitmap WRONG trial={trial} n={n} d={d} L={L} k={k}")
+            print(f"    want {want[:8]}")
+            print(f"    got  {gb[:8]}")
     if len(g0) != len(want):
         bad += 1
         if bad <= 6:
@@ -73,5 +80,5 @@ for trial in range(400):
         if bad <= 6:
             print(f"  sur_segtree DIFFERS trial={trial} n={n} d={d} L={L} k={k}")
 print(f"heavy-breakage stress: {bad} problems, {total} day-answers checked "
-      f"across 3 binaries")
+      f"across 4 binaries")
 sys.exit(1 if bad else 0)

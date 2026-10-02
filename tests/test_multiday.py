@@ -63,6 +63,7 @@ def main(trials=2000, seed=20261002):
         cases.append(gen_trial(rng, n, d, l, k))
 
     exes = [("sur", os.path.join(ROOT, "build", "sur")),
+            ("sur_bitmap", os.path.join(ROOT, "build", "sur_bitmap")),
             ("sur_sweep", os.path.join(ROOT, "build", "sur_sweep"))]
     results = {}
     for name, exe in exes:

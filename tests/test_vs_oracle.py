@@ -26,6 +26,7 @@ sys.path.insert(0, os.path.join(ROOT, "reference"))
 from oracle import solve_day          # noqa: E402
 
 EXE = os.path.join(BUILD, "sur")
+BITMAP = os.path.join(BUILD, "sur_bitmap")
 
 
 def one_case(L, k, W, p):
@@ -79,23 +80,35 @@ def exhaustive(Lmax=9, kmax=9, mmax=4):
     return cases
 
 
+def check(exe, cases, want, label):
+    bad = 0
+    CH = 500
+    for i in range(0, len(cases), CH):
+        chunk = cases[i:i + CH]
+        got = run_batch(chunk, exe)
+        # run_batch already refuses to return the wrong number of answers
+        for j, g in enumerate(got):
+            if g != want[i + j]:
+                if bad < 5:
+                    print(f"  MISMATCH [{label}] {chunk[j]}: "
+                          f"want {want[i+j]}, got {g}")
+                bad += 1
+    print(f"exhaustive mismatches [{label}]: {bad} / {len(cases)}")
+    return bad
+
+
 def main():
     cases = exhaustive()
     want = [solve_day(L, k, W, p) for (L, k, W, p) in cases]
     print(f"exhaustive cases: {len(cases)}")
 
-    bad = 0
-    CH = 500
-    for i in range(0, len(cases), CH):
-        chunk = cases[i:i + CH]
-        got = run_batch(chunk)
-        # run_batch already refuses to return the wrong number of answers
-        for j, g in enumerate(got):
-            if g != want[i + j]:
-                if bad < 5:
-                    print(f"  MISMATCH {chunk[j]}: want {want[i+j]}, got {g}")
-                bad += 1
-    print(f"exhaustive mismatches: {bad} / {len(cases)}")
+    bad = check(EXE, cases, want, "sur")
+    # The flat-bitmap variant shares the segment tree and the whole cost model
+    # with the submission; only the active-station set is represented
+    # differently.  Checking it here means a bug in the bitmap's next()/prev()
+    # cannot hide behind the fact that the sample and a few big runs agree.
+    if os.path.exists(BITMAP):
+        bad += check(BITMAP, cases, want, "sur_bitmap")
     return 1 if bad else 0
 
 

@@ -29,6 +29,7 @@ Only `g++` (C++20) and `python3` are needed. No network, no dependencies.
 | Path | What it is |
 |---|---|
 | `src/sur.cpp` | **the submission** — one segment tree, O(log n) per day |
+| `src/sur_bitmap.cpp` | same algorithm and same answers, active set in a flat bitmask: **1.35 s → 0.79 s** |
 | `reference/sur_sweep.cpp` | slow O(n·d) sweep, ground truth for differential tests |
 | `reference/sur_segtree.cpp` | the O(n)-per-day tree variant of the same model |
 | `reference/oracle.py` | literal state-space brute force — the referee |
@@ -60,6 +61,8 @@ on demand rather than committed: it is 5.5 MB, almost all of it a station list.
 | large-scale differential, n up to 120 000 | 0 / 40 |
 | stress shapes (heavy breakage, full update budget) | identical, 3 shapes |
 | full constraints vs the slow sweep, 250 000 days | byte-identical |
+| `sur_bitmap` vs the oracle, exhaustive | 0 / 68706 |
+| `sur_bitmap` vs `sur`, large + multi-day | identical |
 | overflow audit | worst case 1.0e18 vs 9.2e18 headroom |
 
 The slow sweep and the oracle are independently checked against each other, so
