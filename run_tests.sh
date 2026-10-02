@@ -2,7 +2,8 @@
 # Run the full verification suite.  Builds first, then every test in order.
 #
 #   ./run_tests.sh          all suites
-#   ./run_tests.sh quick    skip the slow large-scale differential
+#   ./run_tests.sh quick    skip the 7 expensive suites (everything from
+#                           "overflow audit" on, incl. the full-limit run)
 #
 # Every suite prints its own counts; a non-zero exit anywhere fails the run.
 set -uo pipefail
@@ -82,12 +83,12 @@ run "ocen data files (reconstructed from the statement prose)" bash -c '
   # rather than committed.  Check the generator still produces legal ones.
   # validate_input.py expands the glob itself, so this does not depend on the
   # calling shell expanding it (zsh does not, by default).
-  tmp=$(mktemp -d)
-  cp generators/gen_ocen.py "$tmp"/
-  ( cd "$tmp" && python3 gen_ocen.py >/dev/null ) || exit 1
-  python3 generators/validate_input.py "$tmp"/in_*.txt > /dev/null || exit 1
+  # gen_ocen.py writes next to the repo, into build/ocen/, so running it from
+  # anywhere can no longer litter the working tree.
+  python3 generators/gen_ocen.py >/dev/null || exit 1
+  python3 generators/validate_input.py build/ocen/in_*.txt > /dev/null || exit 1
   echo "  4ocen regenerated and validated (not committed, by design)"
-  rm -rf "$tmp"'
+  rm -rf build/ocen'
 
 run "statement-convention test (line 2 = repaired, line 3 = damaged)" \
     python3 tests/test_zu_convention.py

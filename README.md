@@ -23,7 +23,7 @@ limit.
 ./build.sh                      # builds everything into build/
 ./build/sur < input.txt         # the submission
 ./run_tests.sh                  # full verification suite
-./run_tests.sh quick            # skips the two slow suites
+./run_tests.sh quick            # skips the 7 expensive suites below "overflow audit"
 ```
 
 Only `g++` (C++20) and `python3` are needed for the solution and its tests. No

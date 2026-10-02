@@ -76,8 +76,15 @@ def ocen4():
 
 
 if __name__ == "__main__":
+    from pathlib import Path
+    # Write into the build directory, never the caller's CWD.  These used to be
+    # dumped as ./in_*ocen.txt, so running the generator from the repo root
+    # littered the working tree and `git add -A` committed a 5.5 MB copy of
+    # 4ocen -- the very file the README says is deliberately not committed.
+    out = Path(__file__).resolve().parent.parent / "build" / "ocen"
+    out.mkdir(parents=True, exist_ok=True)
     for name, fn in (("1ocen", ocen1), ("2ocen", ocen2), ("3ocen", ocen3), ("4ocen", ocen4)):
         t = fn()
-        with open(f"in_{name}.txt", "w") as f:
-            f.write(t)
-        print(f"wrote in_{name}.txt  header: {t.splitlines()[0]}")
+        f = out / f"in_{name}.txt"
+        f.write_text(t)
+        print(f"wrote {f}  header: {t.splitlines()[0]}")

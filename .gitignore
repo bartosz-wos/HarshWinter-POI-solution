@@ -19,3 +19,7 @@ compile_commands.json
 # python
 __pycache__/
 *.pyc
+
+# gen_ocen.py used to write ./in_*ocen.txt into the call's CWD, so running it
+# from the repo root left duplicates that git add -A swept in.
+in_*ocen.txt
