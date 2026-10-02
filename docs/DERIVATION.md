@@ -101,6 +101,31 @@ measure.
 `generators/validate_input.py` exists for exactly this, and it is worth running
 on any generated input *before* believing any downstream mismatch.
 
+## Phase 7 — the tests that could not fail
+
+Moving the work into a repository exposed a defect the numbers had been hiding.
+`tests/test_vs_oracle.py` reported "exhaustive mismatches: 0 / 68706" — the
+figure quoted above as proof the slow reference was oracle-checked — while its
+comparison loop ran **zero** times. It packed many configurations into a single
+file behind a `0 0 0` sentinel header; the binary read the header, produced no
+output, `got` was empty, and every case passed vacuously.
+
+Three things had to be true before that was visible:
+
+- the suite had to be *run from a fresh clone*, because the file that broke it
+  worked on the machine that wrote it;
+- every test and proof program had to actually exit non-zero, because they all
+  printed a count and returned 0;
+- the multi-day tests had to include the submission at all, because they had
+  only ever run the two references, leaving repairs, breakages and state
+  carried between days untested on the code that ships.
+
+`tests/test_harness_can_fail.py` now injects a binary that always prints 0 and
+requires the suite to catch it. It does, 68706/68706. The general lesson is
+not about this bug: **a test whose loop can execute zero times and still report
+success is indistinguishable from a passing test**, and a green suite is
+evidence about the suite before it is evidence about the solver.
+
 ## What actually mattered
 
 Ranked by contribution:
@@ -112,6 +137,8 @@ Ranked by contribution:
 3. **Measuring the failure rather than guessing at it** — the 83.4% figure, the
    per-node change counts, the error signs.
 4. **Validating the inputs, not just the solver.**
+5. **Running the suite from somewhere else.** Portability is a test, and it was
+   the only thing that exposed the vacuous oracle test.
 
 The elegant part — the envelope collapse — took an afternoon once the
 reformulation was visible. The unglamorous parts took the other half of the

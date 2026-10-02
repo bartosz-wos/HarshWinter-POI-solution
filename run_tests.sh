@@ -27,6 +27,25 @@ run() {                     # run <name> <command...>
 echo "== checking the runner parses"
 bash -n "$0" || { echo "run_tests.sh has a syntax error"; exit 1; }
 
+# Byte-compile every test up front.  A NameError at import time otherwise shows
+# up mid-run, after the expensive suites have already burned their time.
+echo "== checking the tests import"
+python3 -m compileall -q tests generators >/dev/null || {
+  echo "a test or generator has a syntax error"; exit 1; }
+for t in tests/test_*.py; do
+  python3 - "$t" <<'PY' || exit 1
+import importlib.util, sys
+p = sys.argv[1]
+spec = importlib.util.spec_from_file_location("_probe", p)
+# Import only up to the driver: execute the module preamble, which is where a
+# bad path constant or missing import lives, without running the whole suite.
+src = open(p).read()
+head = src.split("\nrng = ")[0].split("\nif __name__")[0]
+g = {"__name__": "_probe", "__file__": p}
+exec(compile(head, p, "exec"), g)
+PY
+done
+
 echo "== building"
 ./build.sh >/dev/null || { echo "build failed"; exit 1; }
 
