@@ -10,6 +10,7 @@ cd "$(dirname "$0")"
 
 MODE=${1:-all}
 FAILED=()
+SKIPPED=()
 run() {                     # run <name> <command...>
   local name=$1; shift
   echo
@@ -54,6 +55,7 @@ echo "== building"
 if command -v typst >/dev/null; then
   run "editorial builds and is not silently truncated" bash -c './docs/build_editorial.sh'
 else
+  SKIPPED+=("editorial (typst not installed)")
   echo "-- editorial: SKIP (typst not installed)"
 fi
 
@@ -144,6 +146,9 @@ fi
 
 echo
 echo "=============================================================="
+if [ ${#SKIPPED[@]} -gt 0 ]; then
+  echo "== SKIPPED (not checked): ${SKIPPED[*]}"
+fi
 if [ ${#FAILED[@]} -eq 0 ]; then
   echo "== ALL SUITES PASSED"
   exit 0
