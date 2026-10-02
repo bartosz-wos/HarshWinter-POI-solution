@@ -1,4 +1,4 @@
-// OI XXVIII "Surowa zima" (sur) -- O(n + (d + sum(z+u)) log n).
+// OI XXVIII "Surowa zima" (sur) -- O(n + (d + sum_{i=1..d} (z_i + u_i)) log n).
 //
 // ===========================================================================
 // Model

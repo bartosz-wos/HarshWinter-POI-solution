@@ -75,7 +75,7 @@
 )
 
 = Surowa zima
-#cap([An editorial: from the statement to an $O((n + d) log n)$ solution])
+#cap([An editorial: from the statement to an $O(n + (d + sum_(i=1)^d (z_i + u_i)) log n)$ solution])
 
 #v(0.5em)
 #block(fill: PANEL, stroke: 0.5pt + PANELB, radius: 3pt, inset: 8pt, width: 100%)[

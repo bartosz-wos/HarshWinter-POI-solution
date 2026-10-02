@@ -75,6 +75,21 @@ for bad_num in ("1 499 965", "1499965"):
         raise SystemExit(f"editorial still cites the illegal update count {bad_num}")
 if "500" not in txt:
     raise SystemExit("editorial lost the legal update-budget figure")
+# The cover used to advertise O((n + d) log n) while src/sur.cpp line 1 and
+# section 8 both carried the update-dependent bound.  A tighter bound on the
+# cover than in the body reads as a contradiction, so tie them together here
+# rather than trusting a careful reader to notice.
+src = open("editorial.typ").read()
+cover = src.split("An editorial: from the statement to an", 1)
+if len(cover) < 2:
+    raise SystemExit("could not find the cover subtitle in editorial.typ")
+cover = cover[1].split("solution", 1)[0]
+if "sum_(i=1)^d (z_i + u_i)" not in cover:
+    raise SystemExit("cover subtitle drops the update term the whole editorial "
+                     "is about; it must match the header of src/sur.cpp")
+head = open("../src/sur.cpp").read().splitlines()[0]
+if "z_i + u_i" not in head and "z+u" not in head:
+    raise SystemExit(f"src/sur.cpp header lost its bound: {head!r}")
 # A placeholder measurement is worse than a missing one: it reads like a
 # number.  The sweep re-measurement took 38 minutes and was left as "TBD" while
 # it ran, so this refuses to let any such placeholder through.
