@@ -61,8 +61,27 @@ def check(path, verbose=True):
 
 
 if __name__ == "__main__":
+    import glob as _glob
     bad = 0
-    for p in sys.argv[1:]:
+    paths = []
+    nomatch = 0
+    for pat in sys.argv[1:]:
+        # Expand the pattern here rather than depending on the caller's shell:
+        # zsh does not expand globs by default, and a shell that DOES expand
+        # one matching nothing hands us a literal path.  Either way, glob() in
+        # Python is the reliable place to do it.
+        if any(c in pat for c in "*?["):
+            hits = sorted(_glob.glob(pat))
+            if not hits:
+                print(f"{pat}: no files matched this pattern")
+                nomatch += 1
+                continue
+            paths.extend(hits)
+        else:
+            paths.append(pat)
+    for p in paths:
         bad += len(check(p))
     print("total problems:", bad)
+    if nomatch:
+        sys.exit(2)
     sys.exit(1 if bad else 0)

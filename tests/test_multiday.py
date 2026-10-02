@@ -10,7 +10,7 @@ Legal per the statement:
 import os, sys, subprocess, random
 from concurrent.futures import ThreadPoolExecutor
 
-ROOT = "/home/stefan/projects/sur"
+ROOT = os.path.dirname(HERE)
 sys.path.insert(0, os.path.join(ROOT, "reference"))
 from day_model import day_O_n          # noqa: E402
 

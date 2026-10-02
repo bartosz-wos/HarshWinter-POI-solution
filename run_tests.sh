@@ -24,6 +24,9 @@ run() {                     # run <name> <command...>
   fi
 }
 
+echo "== checking the runner parses"
+bash -n "$0" || { echo "run_tests.sh has a syntax error"; exit 1; }
+
 echo "== building"
 ./build.sh >/dev/null || { echo "build failed"; exit 1; }
 
@@ -36,23 +39,26 @@ run "oracle's own closed forms vs brute force" python3 tests/test_oracle_selfche
 run "submission vs state-space oracle (exhaustive)" python3 tests/test_vs_oracle.py
 
 run "ocen data files (reconstructed from the statement prose)" bash -c '
+  out=$(mktemp)
   for t in tests/data_*.in; do
     python3 generators/validate_input.py "$t" > /dev/null || { echo "$t: ILLEGAL"; exit 1; }
-    ./build/sur < "$t" > /tmp/sur_out.$$ || exit 1
-    n=$(wc -l < /tmp/sur_out.$$)
-    if grep -qvE "^[0-9]+$" /tmp/sur_out.$$; then echo "$t: NON-NUMERIC OUTPUT"; exit 1; fi
-    if grep -qx "0" /tmp/sur_out.$$; then echo "$t: produced a 0 (sentinel?)"; exit 1; fi
+    ./build/sur < "$t" > "$out" || exit 1
+    n=$(wc -l < "$out")
+    if grep -qvE "^[0-9]+$" "$out"; then echo "$t: NON-NUMERIC OUTPUT"; exit 1; fi
+    if grep -qx "0" "$out"; then echo "$t: produced a 0 (sentinel?)"; exit 1; fi
     echo "  $t -> $n answers, legal input, all positive integers"
   done
+  rm -f "$out"
   # 4ocen is 5.5 MB of mostly a station list, so it is regenerated on demand
-  # rather than committed.  Check the generator still produces a legal one.
+  # rather than committed.  Check the generator still produces legal ones.
+  # validate_input.py expands the glob itself, so this does not depend on the
+  # calling shell expanding it (zsh does not, by default).
   tmp=$(mktemp -d)
   cp generators/gen_ocen.py "$tmp"/
-  ( cd "$tmp" && python3 gen_ocen.py >/dev/null )
-  python3 generators/validate_input.py "$tmp"/in_*.in > /dev/null || exit 1
+  ( cd "$tmp" && python3 gen_ocen.py >/dev/null ) || exit 1
+  python3 generators/validate_input.py "$tmp"/in_*.txt > /dev/null || exit 1
   echo "  4ocen regenerated and validated (not committed, by design)"
-  rm -rf "$tmp"' 
-  rm -f /tmp/sur_out.$$
+  rm -rf "$tmp"'
 
 run "statement-convention test (line 2 = repaired, line 3 = damaged)" \
     python3 tests/test_zu_convention.py
