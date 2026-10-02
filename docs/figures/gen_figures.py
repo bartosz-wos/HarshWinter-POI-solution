@@ -14,7 +14,9 @@ Layout discipline, learned the hard way from a vision check on the first draft:
 
 Run:  python3 gen_figures.py
 """
+import glob
 import os
+import re
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
@@ -26,7 +28,8 @@ BAD = "#dc2626"
 ACCENT = "#2563eb"
 SNOW = "#93c5fd"
 WARN = "#b45309"
-BG = "#ffffff"
+BG       = "#ffffff"
+PANELB   = "#dde3ec"   # hairline, matches the Typst palette
 
 
 def esc(s):
@@ -40,6 +43,28 @@ def _head(width, height):
         f'font-family="DejaVu Sans, Helvetica, Arial, sans-serif">'
         f'<rect width="{width}" height="{height}" fill="{BG}"/>'
     )
+
+
+def wrap(text, width, fontsize, x):
+    """Break `text` into lines that fit `width` starting at `x`.
+
+    Every note in these figures was a single <text> line; the envelope note ran
+    389px past the right edge of its canvas and was silently clipped.  SVG has
+    no text wrapping, so it is done here.
+    """
+    maxw = width - x
+    cw = fontsize * 0.55
+    lines, cur = [], ""
+    for word in text.split():
+        trial = word if not cur else cur + " " + word
+        if len(trial) * cw <= maxw or not cur:
+            cur = trial
+        else:
+            lines.append(cur)
+            cur = word
+    if cur:
+        lines.append(cur)
+    return lines
 
 
 def road_svg(name, l, stations, p=None, broken=(), route=(), width=880, height=270,
@@ -56,6 +81,10 @@ def road_svg(name, l, stations, p=None, broken=(), route=(), width=880, height=2
     span = width - pad_l - pad_r
     y = 122.0                # the road, pushed down clear of the title
     lane1, lane2 = y + 88.0, y + 132.0
+    # Grow the canvas so a wrapped note is never clipped off the bottom.
+    if note:
+        need = 14 + 15 * len(wrap(note, width, 11.5, pad_l)) + 8
+        height = max(height, lane2 + 30 + need)
     ids = {sid: c for sid, c in stations}
 
     def X(c):
@@ -113,21 +142,27 @@ def road_svg(name, l, stations, p=None, broken=(), route=(), width=880, height=2
                     f'font-weight="700" fill="{BAD}" text-anchor="middle">'
                     f'{sid}</text>')
 
-    # ---- start marker: a callout ABOVE, clear of everything else ----
+    # ---- start marker ----
+    # The callout goes BELOW the road, not above.  Above, it collided with the
+    # title: the title sits at y=26 and the callout text at y-85 = 37, a 2px gap
+    # at best.  Below the road the two route lanes are already at fixed depths,
+    # so the callout is pinned just under the road line instead, and the "p"
+    # glyph goes inside the dot while "start" sits beside it rather than above.
     if p is not None:
         out.append(
-            f'<line x1="{X(p)}" y1="{y-15}" x2="{X(p)}" y2="{y-60}" '
+            f'<line x1="{X(p)}" y1="{y+9}" x2="{X(p)}" y2="{y+30}" '
             f'stroke="{ACCENT}" stroke-width="1.4" stroke-dasharray="3 3"/>')
         out.append(
-            f'<circle cx="{X(p)}" cy="{y-68}" r="7" fill="{ACCENT}"/>')
+            f'<circle cx="{X(p)}" cy="{y+37}" r="8" fill="{ACCENT}"/>')
         out.append(
-            f'<text x="{X(p)}" y="{y-72}" font-size="11" font-weight="700" '
+            f'<text x="{X(p)}" y="{y+41}" font-size="11" font-weight="700" '
             f'fill="#ffffff" text-anchor="middle">p</text>')
         out.append(
-            f'<text x="{X(p)}" y="{y-85}" font-size="11.5" font-weight="700" '
+            f'<text x="{X(p)}" y="{y+62}" font-size="11.5" font-weight="700" '
             f'fill="{ACCENT}" text-anchor="middle">start</text>')
 
     # ---- route legs, numbered, in two lanes well below everything ----
+    placed = {lane1: [], lane2: []}
     for i, leg in enumerate(route):
         a, b = leg[0], leg[1]
         cost = leg[2] if len(leg) > 2 else None
@@ -145,11 +180,19 @@ def road_svg(name, l, stations, p=None, broken=(), route=(), width=880, height=2
         out.append(
             f'<path d="M {x2} {ly} L {x2-7*d} {ly-4.6} L {x2-7*d} {ly+4.6} Z" '
             f'fill="{ACCENT}"/>')
-        # numbered marker at the left of each leg
+        # Numbered marker at the left of each leg.  Two legs can start at the
+        # same coordinate in the same lane -- in the sample, legs 2 and 4 both
+        # leave x=2 and both fall in the even lane -- which put two numbered
+        # circles on the same pixel and hid one of them.  Track the x of every
+        # marker already placed in this lane and shift a repeat clear of it.
+        mx = x1
+        while any(abs(mx - u) < 19.0 for (u, _v) in placed[ly]):
+            mx -= 19.0
+        placed[ly].append((mx, ly))
         out.append(
-            f'<circle cx="{x1}" cy="{ly}" r="8.5" fill="{ACCENT}"/>')
+            f'<circle cx="{mx}" cy="{ly}" r="8.5" fill="{ACCENT}"/>')
         out.append(
-            f'<text x="{x1}" y="{ly+3.8}" font-size="10" font-weight="700" '
+            f'<text x="{mx}" y="{ly+3.8}" font-size="10" font-weight="700" '
             f'fill="#ffffff" text-anchor="middle">{i+1}</text>')
         if cost is not None:
             out.append(
@@ -158,9 +201,11 @@ def road_svg(name, l, stations, p=None, broken=(), route=(), width=880, height=2
                 f'{cost}</text>')
 
     if note:
-        out.append(
-            f'<text x="{pad_l}" y="{height-14}" font-size="11.5" '
-            f'fill="{DIM}">{esc(note)}</text>')
+        nlines = wrap(note, width, 11.5, pad_l)
+        for i, ln in enumerate(nlines):
+            out.append(
+                f'<text x="{pad_l}" y="{height-14-len(nlines)+1+i*15}" '
+                f'font-size="11.5" fill="{DIM}">{esc(ln)}</text>')
 
     out.append("</svg>")
     path = os.path.join(HERE, name)
@@ -179,7 +224,14 @@ def envelope_svg(name, l, S, C, ps, width=880, height=330, title=None,
     consecutive stations the envelope is just min(p + A_t, -p + B_t), with no
     p in the node state.
     """
-    pad_l, pad_r, pad_t, pad_b = 74.0, 44.0, 52.0, 66.0
+    # pad_b reserves three stacked bands under the axis: the station tick
+    # labels, then the legend strip, then the note.  It grew from 66 when the
+    # legend moved down there to stop colliding with a "p=N" label in the plot.
+    pad_l, pad_r, pad_t, pad_b = 74.0, 44.0, 52.0, 112.0
+    # Bands under the axis: ticks (Y(0)+20), hairline (+34), legend (+48),
+    # then the note at legend+26 growing 15px per wrapped line.
+    if note:
+        pad_b = max(pad_b, 112.0 + 26 + 15 * len(wrap(note, width, 11.5, pad_l)))
     W = width - pad_l - pad_r
     H = height - pad_t - pad_b
     allv = [(S[s], C[s]) for s in range(len(S))]
@@ -265,31 +317,95 @@ def envelope_svg(name, l, S, C, ps, width=880, height=330, title=None,
         out.append(
             f'<circle cx="{X(kp)}" cy="{Y(f(kp))}" r="4" fill="{col}" '
             f'stroke="#ffffff" stroke-width="1.4"/>')
-    # legend
-    lx, ly = pad_l + 6, pad_t + 14
+    # Legend, in its own strip BELOW the axis.  It used to sit in the top-left
+    # of the plot area, where the "p=3" label landed and the two collided.  The
+    # axis band is empty everywhere, so the legend is unambiguous there.
+    # Bands under the axis, spaced so nothing can touch:
+    #   ticks   at Y(0)+20
+    #   legend  at Y(0)+48  (with a hairline at Y(0)+34)
+    #   note    at legend + 24
+    lx, ly = pad_l, Y(0) + 48
     out.append(
-        f'<circle cx="{lx}" cy="{ly-4}" r="4" fill="{DIM}" '
+        f'<line x1="{pad_l}" y1="{ly-16}" x2="{width-pad_r}" y2="{ly-16}" '
+        f'stroke="{PANELB}" stroke-width="0.8"/>')
+    out.append(
+        f'<circle cx="{lx+4}" cy="{ly-4}" r="4" fill="{DIM}" '
         f'stroke="#ffffff" stroke-width="1.4"/>')
     out.append(
-        f'<text x="{lx+11}" y="{ly}" font-size="11" fill="{DIM}">'
+        f'<text x="{lx+15}" y="{ly}" font-size="11" fill="{DIM}">'
         f'turn at a station</text>')
     out.append(
-        f'<circle cx="{lx+140}" cy="{ly-4}" r="4" fill="{WARN}" '
+        f'<circle cx="{lx+175}" cy="{ly-4}" r="4" fill="{WARN}" '
         f'stroke="#ffffff" stroke-width="1.4"/>')
     out.append(
-        f'<text x="{lx+151}" y="{ly}" font-size="11" fill="{WARN}">'
+        f'<text x="{lx+186}" y="{ly}" font-size="11" fill="{WARN}">'
         f'turn inside a gap</text>')
 
     if note:
-        out.append(
-            f'<text x="{pad_l}" y="{height-13}" font-size="11.5" '
-            f'fill="{DIM}">{esc(note)}</text>')
+        # Anchored to the legend strip, not to the canvas bottom, so the two
+        # can never collide if the plot is ever resized.
+        nlines = wrap(note, width, 11.5, pad_l)
+        for i, ln in enumerate(nlines):
+            out.append(
+                f'<text x="{pad_l}" y="{ly+26+i*15}" font-size="11.5" '
+                f'fill="{DIM}">{esc(ln)}</text>')
     out.append("</svg>")
     path = os.path.join(HERE, name)
     with open(path, "w") as fh:
         fh.write("\n".join(out))
     print(f"  wrote {os.path.relpath(path, os.path.dirname(HERE))}")
     return path
+
+
+def _selfcheck(paths):
+    """Fail loudly on the two layout bugs that actually happened.
+
+    1. Two <text> boxes overlapping.  A vision pass over the PDF reported the
+       pages were clean while the figures were visibly broken, because the SVGs
+       are scaled down to fit the text block -- at 100 dpi a 2px collision in
+       an 880px-wide figure is a fraction of a pixel.  So the geometry is
+       checked here instead of being looked at.
+    2. A text line running past the right edge of the canvas, which SVG simply
+       clips.  The envelope note was 389px too long and lost its ending.
+    """
+    bad = 0
+    for fn in paths:
+        s = open(fn).read()
+        head = re.search(r'width="([\d.]+)"\s+height="([\d.]+)"', s)
+        W = float(head.group(1))
+        boxes = []
+        for m in re.finditer(r'<text([^>]*)>([^<]*)</text>', s):
+            attrs, body = m.group(1), m.group(2)
+            if not body.strip():
+                continue
+            xm = re.search(r'\bx="([\d.]+)"', attrs)
+            ym = re.search(r'\by="([\d.]+)"', attrs)
+            fm = re.search(r'font-size="([\d.]+)"', attrs)
+            am = re.search(r'text-anchor="(\w+)"', attrs)
+            if not (xm and ym):
+                continue
+            x, y = float(xm.group(1)), float(ym.group(1))
+            fs = float(fm.group(1)) if fm else 12.0
+            w = len(body) * fs * 0.55
+            anc = am.group(1) if am else "start"
+            x0 = x - w / 2 if anc == "middle" else x
+            boxes.append((x0, y - fs * 0.8, x0 + w, y + fs * 0.25, body))
+            if x0 + w > W + 1:
+                print(f"  FAIL {os.path.basename(fn)}: text runs off the "
+                      f"canvas ({x0 + w:.0f} > {W:.0f}): {body[:50]!r}")
+                bad += 1
+        for i in range(len(boxes)):
+            for j in range(i + 1, len(boxes)):
+                a, b = boxes[i], boxes[j]
+                ox = min(a[2], b[2]) - max(a[0], b[0])
+                oy = min(a[3], b[3]) - max(a[1], b[1])
+                if ox > 0 and oy > 0:
+                    print(f"  FAIL {os.path.basename(fn)}: labels overlap "
+                          f"({ox:.0f}x{oy:.0f}px): {a[4]!r} <-> {b[4]!r}")
+                    bad += 1
+    if bad:
+        raise SystemExit(f"{bad} figure layout problem(s); see above")
+    print("  layout self-check: no overlapping labels, nothing off-canvas")
 
 
 def main():
@@ -344,6 +460,7 @@ def main():
         height=230,
     )
 
+    _selfcheck(sorted(glob.glob(os.path.join(HERE, "fig-*.svg"))))
     print("done")
 
 
