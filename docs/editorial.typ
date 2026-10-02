@@ -296,7 +296,7 @@ algebra is easy; the bookkeeping is the hard part.
 #dtbl(([Measurement], [Time], [Memory]),
   (
     ([Every constraint at its cap, `sum(z+u) = 500 000`], [*0.63 s*], [73 MB]),
-    ([Same input, naive $O(n dot d)$ sweep], [TBD s], [29 MB]),
+    ([Same input, naive $O(n dot d)$ sweep], [2 286 s], [31 MB]),
     ([Same input, output byte-identical], [yes], [yes]),
     ([`sur_bitmap`, same answers, flat bitmap instead of `std::set`], [0.38 s], [61 MB]),
   ),

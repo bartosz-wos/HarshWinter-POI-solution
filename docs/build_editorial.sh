@@ -75,7 +75,13 @@ for bad_num in ("1 499 965", "1499965"):
         raise SystemExit(f"editorial still cites the illegal update count {bad_num}")
 if "500" not in txt:
     raise SystemExit("editorial lost the legal update-budget figure")
+# A placeholder measurement is worse than a missing one: it reads like a
+# number.  The sweep re-measurement took 38 minutes and was left as "TBD" while
+# it ran, so this refuses to let any such placeholder through.
+if "TBD" in txt or "TODO" in txt or "XXX" in txt:
+    raise SystemExit("editorial still contains a placeholder measurement")
 print("    all five primitive costs present, no unescaped spacing,")
-print("    mid-gap-turn correction present, day-indexed sum, legal budget")
+print("    mid-gap-turn correction present, day-indexed sum, legal budget,")
+print("    no placeholder measurements")
 PY
 fi

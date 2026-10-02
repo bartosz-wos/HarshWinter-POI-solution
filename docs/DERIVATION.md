@@ -78,7 +78,7 @@ segment tree that had resisted a dozen designs works on the first try against
 the reformulated objective — the difficulty was never the merge, it was the
 `p` in the leaves.
 
-    n = d = 250000, l = 1e9, sum(z+u) = 500000   (sweep timing pending re-run)
+    n = d = 250000, l = 1e9, sum(z+u) = 500000   2286 s  →  0.63 s
     output                       byte-identical over all 250000 days
 
     NOTE: this input was originally generated with 1 499 965 updates, three
