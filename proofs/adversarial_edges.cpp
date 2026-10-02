@@ -78,5 +78,7 @@ int main(){
         L,K,m,p,mode,want,got); ++bad; }
   }
   printf("edge-case mismatches: %lld / %lld   (zero-answer cases: %lld)\n", bad, N, zeros);
-  return 0;
+  // A zero answer is a sentinel leaking out, never a legitimate result:
+  // every day must clear at least one unit of road.
+  return (bad || zeros) ? 1 : 0;
 }

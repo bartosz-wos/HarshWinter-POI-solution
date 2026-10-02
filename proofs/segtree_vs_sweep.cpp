@@ -86,5 +86,5 @@ int main(){
     if(got!=want){ if(bad<4) printf("L=%d K=%lld m=%d p=%lld sweep=%lld seg=%lld\n",L,K,m,p,want,got); ++bad; }
   }
   printf("segment-tree mismatches: %lld / %lld\n", bad, N);
-  return 0;
+  return bad ? 1 : 0;
 }

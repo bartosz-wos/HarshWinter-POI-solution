@@ -50,19 +50,28 @@ for trial in range(400):
         W = [xs[i] for i in range(n) if ok[i]]
         want.append(day_O_n(L, k, W, p) if W else 0)
     src = "\n".join(lines) + "\n"
+    g0 = run("sur", src)          # the submission
     g1 = run("sur_sweep", src)
     g2 = run("sur_segtree", src)
     total += len(want)
+    if len(g0) != len(want):
+        bad += 1
+        if bad <= 6:
+            print(f"  sur LENGTH trial={trial}: want {len(want)} got {len(g0)}")
+    elif g0 != want:
+        bad += 1
+        if bad <= 6:
+            print(f"  sur WRONG trial={trial} n={n} d={d} L={L} k={k}")
+            print(f"    want {want[:8]}")
+            print(f"    got  {g0[:8]}")
     if g1 != want:
         bad += 1
-        if bad <= 3:
-            print(f"  surc WRONG trial={trial} n={n} d={d} L={L} k={k}")
-            print(f"    want {want[:8]}")
-            print(f"    got  {g1[:8]}")
+        if bad <= 6:
+            print(f"  sur_sweep WRONG trial={trial} n={n} d={d} L={L} k={k}")
     if g2 != g1:
         bad += 1
         if bad <= 6:
-            print(f"  sur3 DIFFERS trial={trial} n={n} d={d} L={L} k={k}")
-            print(f"    surc {g1[:8]}")
-            print(f"    sur3 {g2[:8]}")
-print(f"heavy-breakage stress: {bad} problems, {total} day-answers checked")
+            print(f"  sur_segtree DIFFERS trial={trial} n={n} d={d} L={L} k={k}")
+print(f"heavy-breakage stress: {bad} problems, {total} day-answers checked "
+      f"across 3 binaries")
+sys.exit(1 if bad else 0)

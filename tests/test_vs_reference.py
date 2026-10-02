@@ -92,3 +92,4 @@ for trial in range(N):
                   f"want {want} got {gref}")
 print(f"sur5 vs reference: {bad5} / {N} trials wrong")
 print(f"surc vs reference: {badref} / {N} trials wrong")
+sys.exit(1 if (bad5 or badref) else 0)

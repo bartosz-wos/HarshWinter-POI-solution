@@ -66,4 +66,6 @@ for l in range(1, 10):
                     if a != b:
                         print(f"  l={l} k={k} night{i}: want {b} got {a}")
                         break
-print(f"exhaustive-ish sur5 check: {bad} wrong day-answers out of {cases}")
+print(f"exhaustive check: {bad} wrong day-answers out of {cases}")
+import sys as _sys
+_sys.exit(1 if bad else 0)

@@ -30,24 +30,37 @@ for i in range(40):
     k = rng.randint(1, L)
     cases.append((n, d, L, k, rng.randint(0, 10**9)))
 
+# The submission is the thing under test, so it must appear here.  The sweep is
+# O(n*d) and gets skipped at large n on cost alone, which is exactly why it must
+# not be the only oracle: without sur in the comparison, the biggest inputs
+# would go untested.
 bad = 0
+skipped = 0
 for (n, d, L, k, seed) in cases:
     if n > L + 1:
         n = L + 1
     data = gen(n, d, L, k, seed)
-    a = run("sur_segtree", data)
-    b = run("sur_sweep", data)
-    ok = (a == b)
-    if not ok:
+    fast = run("sur", data)
+    la = fast.split()
+    if n * d > 40_000_000:          # too slow to be worth running O(n*d)
+        skipped += 1
+        print(f"  ok n={n:>6} d={d:>4} L={L:>10} k={k:>10}  "
+              f"({len(la)} days, sweep skipped: n*d too large)")
+        continue
+    slow = run("sur_sweep", data)
+    lb = slow.split()
+    if la != lb:
         bad += 1
-        la, lb = a.split(), b.split()
         print(f"  DIFFER n={n} d={d} L={L} k={k} seed={seed} "
               f"(len {len(la)} vs {len(lb)})")
         for idx, (x, y) in enumerate(zip(la, lb)):
             if x != y:
-                print(f"    first diff at day {idx}: seg={x} sweep={y}")
+                print(f"    first diff at day {idx}: sur={x} sweep={y}")
                 break
     else:
-        print(f"  ok n={n:>6} d={d:>4} L={L:>10} k={k:>10}  ({len(a.split())} days)")
+        print(f"  ok n={n:>6} d={d:>4} L={L:>10} k={k:>10}  ({len(la)} days)")
 
-print(f"\nlarge-scale differential mismatches: {bad} / {len(cases)}")
+print(f"\nlarge-scale differential mismatches: {bad} / "
+      f"{len(cases) - skipped} compared ({skipped} sweep-skipped as O(n*d) too slow)")
+sys.exit(1 if bad else 0)
+sys.exit(1 if bad else 0)

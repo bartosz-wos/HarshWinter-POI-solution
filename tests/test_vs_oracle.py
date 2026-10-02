@@ -1,34 +1,73 @@
-"""Final validation of surc: exhaustive small cases vs the state-space oracle,
-plus randomized multi-day replay."""
-import os, sys
+"""Exhaustive oracle check for the SUBMISSION (src/sur.cpp).
+
+Each (L, k, working-station-set, p) configuration is fed to the compiled binary
+as its own complete, statement-legal input, and the answer is compared against
+reference/oracle.py -- a literal state-space brute force.
+
+Why one input per invocation: the C++ program reads a single test case per
+process (a header line `n l k d`, the station list, then `d` nights).  An
+earlier version of this file packed many configurations into one file behind a
+`0 0 0` sentinel header; the binary produced no output, the comparison loop ran
+zero times, and the suite reported "0 mismatches / 68706" while checking
+nothing.  A test that cannot fail is worse than no test, so the runner now
+asserts that the number of answers returned equals the number of questions
+asked, and fails loudly otherwise.
+
+Run directly, or via ./run_tests.sh.
+"""
+import os, sys, subprocess, itertools
+from concurrent.futures import ThreadPoolExecutor
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
-DIR  = os.path.join(ROOT, "build")
+BUILD = os.path.join(ROOT, "build")
 sys.path.insert(0, os.path.join(ROOT, "reference"))
-import subprocess, sys, random, itertools
 
-EXE = os.path.join(DIR, "sur_sweep")
+from oracle import solve_day          # noqa: E402
 
-# ---- run the C++ on a batch of single-day problems ------------------------
-def run_cpp(cases):
-    """cases: list of (L,k,W_sorted,p) -> answers"""
-    inp = []
-    inp.append(f"{len(cases)} 0 0 0")
-    for (L, k, W, p) in cases:
-        inp.append(f"{len(W)} {L} {k} 1")
-        inp.append(" ".join(map(str, W)) if W else "0")
-        inp.append("1 0 " + str(p))
-        inp.append("")
-    r = subprocess.run([EXE], input="\n".join(inp) + "\n",
-                       capture_output=True, text=True, timeout=600)
-    return [int(x) for x in r.stdout.split()], r.stderr
+EXE = os.path.join(BUILD, "sur")
 
-# ---- exhaustive -----------------------------------------------------------
-from oracle import solve_day
+
+def one_case(L, k, W, p):
+    """A complete, legal single-day input: all stations work, no updates."""
+    n = len(W)
+    return (f"{n} {L} {k} 1\n"
+            + " ".join(map(str, W)) + "\n"
+            + "0 0 " + str(p) + "\n\n\n")
+
+
+def run_batch(triples, exe=EXE):
+    """Ask the binary each case in its own process.
+
+    `triples` is a list of (L, k, W, p).  Returns a list of answers, or raises
+    if the binary failed or answered the wrong number of questions.
+    """
+    def one(item):
+        (L, k, W, p) = item
+        src = one_case(L, k, W, p)
+        r = subprocess.run([exe], input=src, capture_output=True,
+                           text=True, timeout=60)
+        if r.returncode != 0:
+            raise RuntimeError(
+                f"{os.path.basename(exe)} exited {r.returncode} on\n{src}"
+                f"stderr: {r.stderr[:300]}")
+        got = r.stdout.split()
+        if len(got) != 1:
+            raise RuntimeError(
+                f"expected exactly 1 answer, got {len(got)} ({got!r}) from\n{src}"
+                f"\nA wrong answer count means the harness and the binary "
+                f"disagree about the input format -- stop and fix that, do not "
+                f"let the comparison loop silently compare nothing.")
+        return int(got[0])
+
+    # One process per case is required (the binary reads a single test case),
+    # so overlap them: 68k serial subprocesses dominates the runtime otherwise.
+    with ThreadPoolExecutor(max_workers=os.cpu_count() or 4) as pool:
+        return list(pool.map(one, triples))
+
 
 def exhaustive(Lmax=9, kmax=9, mmax=4):
-    cases, want = [], []
-    n_ok = 0
+    cases = []
     for L in range(1, Lmax + 1):
         for k in range(1, min(kmax, L) + 1):
             for m in range(1, mmax + 1):
@@ -37,19 +76,28 @@ def exhaustive(Lmax=9, kmax=9, mmax=4):
                 for W in itertools.combinations(range(L + 1), m):
                     for p in range(L + 1):
                         cases.append((L, k, list(W), p))
-                        want.append(solve_day(L, k, list(W), p))
-                        n_ok += 1
-    return cases, want, n_ok
+    return cases
 
-cases, want, n_ok = exhaustive()
-print(f"exhaustive cases: {n_ok}")
-bad = 0
-CH = 4000
-for i in range(0, len(cases), CH):
-    got, err = run_cpp(cases[i:i + CH])
-    for j in range(len(got)):
-        if got[j] != want[i + j]:
-            if bad < 5:
-                print("  MISMATCH", cases[i + j], "want", want[i + j], "got", got[j])
-            bad += 1
-print("exhaustive mismatches:", bad, "/", n_ok)
+
+def main():
+    cases = exhaustive()
+    want = [solve_day(L, k, W, p) for (L, k, W, p) in cases]
+    print(f"exhaustive cases: {len(cases)}")
+
+    bad = 0
+    CH = 500
+    for i in range(0, len(cases), CH):
+        chunk = cases[i:i + CH]
+        got = run_batch(chunk)
+        # run_batch already refuses to return the wrong number of answers
+        for j, g in enumerate(got):
+            if g != want[i + j]:
+                if bad < 5:
+                    print(f"  MISMATCH {chunk[j]}: want {want[i+j]}, got {g}")
+                bad += 1
+    print(f"exhaustive mismatches: {bad} / {len(cases)}")
+    return 1 if bad else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

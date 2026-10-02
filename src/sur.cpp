@@ -118,6 +118,10 @@ static int64 lroad;
 
 static inline int64 tri(int64 x) {
     if (x <= 0) return 0;
+    // The statement guarantees k >= 1, so K is never 0 on valid input.  The
+    // guard costs one predictable branch and turns an illegal input from a
+    // SIGFPE (a core dump that looks like a solver bug) into a finite answer.
+    if (K <= 0) return 0;
     int64 m = (x - 1) / K;
     return m * x - K * m * (m + 1) / 2;
 }

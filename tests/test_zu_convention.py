@@ -68,3 +68,5 @@ for trial in range(N):
             print(f"    got  {got}")
             print("    input:\n" + text)
 print(f"z/u convention check: {mismatch} / {N} trials wrong")
+import sys as _sys
+_sys.exit(1 if mismatch else 0)

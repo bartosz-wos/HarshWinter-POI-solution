@@ -1,15 +1,28 @@
-"""Validate a sur input file against every rule the statement guarantees."""
+"""Validate a sur input file against every rule the statement guarantees.
+
+    usage:  validate_input.py <file> [...]
+
+Exits non-zero if any file has a problem, so it can gate a pipeline.
+
+The semantic rules matter more than the structural ones.  A pair of lists that
+mean opposite things (repaired vs damaged) passes every count/sort/disjointness
+check, so those are also validated against the running state: a listed repair
+must currently be broken, a listed damage must currently be working, and at
+least one station must survive every night.
+"""
 import sys
+
+NMAX, LMAX, DMAX, ZUMAX = 250000, 10**9, 250000, 500000
 
 
 def check(path, verbose=True):
     txt = open(path).read().split("\n")
     n, l, k, d = map(int, txt[0].split())
     errs = []
-    if not (1 <= n <= 250000): errs.append(f"n={n} out of range")
-    if not (1 <= l <= 10**9):  errs.append(f"l={l} out of range")
-    if not (1 <= k <= l):      errs.append(f"k={k} out of range")
-    if not (1 <= d <= 250000): errs.append(f"d={d} out of range")
+    if not (1 <= n <= NMAX): errs.append(f"n={n} outside 1..{NMAX}")
+    if not (1 <= l <= LMAX): errs.append(f"l={l} outside 1..{LMAX}")
+    if not (1 <= k <= l):    errs.append(f"k={k} outside 1..l")
+    if not (1 <= d <= DMAX): errs.append(f"d={d} outside 1..{DMAX}")
     xs = list(map(int, txt[1].split()))
     if len(xs) != n: errs.append(f"x has {len(xs)} values, expected {n}")
     if xs != sorted(xs): errs.append("x not increasing")
@@ -39,7 +52,7 @@ def check(path, verbose=True):
         work = (work | set(Z)) - set(U)
         if not work: errs.append(f"day {day+1}: ALL stations down")
         total_zu += z + u
-    if total_zu > 500000: errs.append(f"sum(z+u) = {total_zu} > 500000")
+    if total_zu > ZUMAX: errs.append(f"sum(z+u) = {total_zu} > {ZUMAX}")
     if verbose:
         print(f"{path}: {'OK' if not errs else 'PROBLEMS'}")
         for e in errs[:6]:
@@ -52,3 +65,4 @@ if __name__ == "__main__":
     for p in sys.argv[1:]:
         bad += len(check(p))
     print("total problems:", bad)
+    sys.exit(1 if bad else 0)

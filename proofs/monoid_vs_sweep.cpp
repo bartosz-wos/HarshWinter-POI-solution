@@ -106,5 +106,5 @@ int main(){
     if(a!=b){ if(bad<4) printf("L=%d K=%lld m=%d p=%lld sweep=%lld mono=%lld\n",L,K,m,p,a,b); ++bad; }
   }
   printf("monoid mismatches: %lld / %lld\n", bad, N);
-  return 0;
+  return bad ? 1 : 0;
 }
