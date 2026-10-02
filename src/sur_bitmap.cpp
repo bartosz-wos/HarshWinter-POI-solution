@@ -152,6 +152,16 @@ static inline int64 Ipass(int64 g) {
     return g + 2 * (f(a) + f(b));
 }
 
+// NOTE on `inline`: most of these are decoration. At -O2 GCC inlines
+// isEmpty/tri/f/Eclose/... into their callers whether or not they are marked,
+// so deleting the keyword changes nothing for them.
+//
+// It is load-bearing for `mrg` and for the `refresh` lambda. Without it GCC
+// decides mrg is big enough that inlining it into its ~9 call sites is not
+// worth the code growth, and emits it out of line: 7 calls from main and 5
+// from the refresh lambda, with the 104-byte Nd passed in memory instead of
+// registers. Measured 1.27 s -> 1.43 s (13%) with the keywords stripped, all
+// output byte-identical. See proofs/optimisation_notes.cpp.
 struct FastScanner {
     static const int SZ = 1 << 16;
     char buf[SZ];

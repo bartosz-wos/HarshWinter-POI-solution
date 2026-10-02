@@ -156,6 +156,57 @@ Two bugs were caught on the way, both by the sample printing the wrong number:
 into a single bottom-up pass: correct, and about 1.5x on the update phase, but
 subsumed by the bitmap and not worth the extra code.
 
+## Phase 9 — what optimisation actually bought
+
+Tried: `[[assume]]`, `[[likely]]`/`[[unlikely]]`, hand-written intrinsics, SIMD
+over the merge, `-O3`, `-march=native`, and packing the segment tree node from
+104 bytes down to 96. Four of those did nothing, and the reasons are structural
+rather than matters of tuning.
+
+The workload is memory-latency-bound. The tree is 524288 nodes x 104 B = 54.5 MB
+against a 9 MB L3, each update touches ~57 nodes, and the run makes ~171 M
+cache-line fetches that nearly all miss. 99% of wall time is user time, so
+there is no I/O to overlap either. At `-O2` the default target is
+`-march=x86-64`, so AVX2 was not even available to the compiler.
+
+    baseline                       1.27 s   72.6 MB
+    -O3                            1.27 s
+    -march=native (AVX2/BMI2)      1.25 s
+    -O3 -march=native              1.25 s
+    96-byte node (empty bit-packed
+      into the sign of clSum)      1.28 s   WORSE
+    flat-bitmap active set         0.76 s   1.71x   <-- the only real win
+
+The 96-byte node is the instructive failure. The `empty` flag is not
+redundant: a node is non-empty iff it holds an active leaf, and `clSum == 0`
+does not imply otherwise, because zero-length gaps make a live node's clSum 0
+too. But `clSum` is a sum of non-negative closed-excursion costs, so its sign
+bit is never set on a live node, and INT64_MIN is free as the marker. That
+really does remove 8 bytes per node. It was still slower, because 96 B is
+exactly 1.5 cache lines: every second node straddles a line boundary, where 104 B
+is 1.625 lines, so line efficiency is ~98% either way and the saved bytes were
+bytes nobody re-read. **The only lever that matters here is touching fewer
+nodes, not smaller nodes.**
+
+There is nothing for SIMD to do either. An update is a 19-level pointer chase
+whose addresses are not known in advance; AVX2 cannot gather them, and the work
+between loads is 12 min/adds on values already in registers. The 171 M dependent
+DRAM loads are latency, not throughput, so wider execution units cannot hide
+them. `[[likely]]` has nothing to annotate: the hot path has no unpredictable
+branch left in it that the profile points at.
+
+The bitmap won for a different reason than expected, and it is worth stating
+precisely: it did not make the segment tree faster at all. It deleted a second
+data structure. Every update was doing a red-black-tree descent -- up to 19 more
+levels of pointer chasing, through a separate ~20 MB structure -- purely to find
+a predecessor and a successor. The bitmap answers both from L1. That is the
+difference between touching the same nodes faster and touching the same nodes
+without paying for a second structure.
+
+`proofs/optimisation_notes.cpp` records the numbers, and
+`proofs/make_lean_variant.py` generates the 96-byte variant so the claim can be
+re-checked rather than taken on trust.
+
 ## Phase 7 — the tests that could not fail
 
 Moving the work into a repository exposed a defect the numbers had been hiding.
