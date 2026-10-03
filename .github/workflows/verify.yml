@@ -1,0 +1,70 @@
+name: build and verify
+
+# The suite is the only thing standing between this repo and a wrong claim, so
+# it runs on every push.  It is fast enough to be worth the wall clock and slow
+# enough that skipping it is tempting, which is exactly why it is not optional.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: install build deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++ python3 python3-pip
+          pip install --user pymupdf
+
+      - name: install typst
+        run: |
+          curl -fsSL https://github.com/typst/typst/releases/latest/download/typst-x86_64-unknown-linux-musl.tar.xz \
+            | sudo tar -xJ -C /usr/local/bin --strip-components=1
+
+      - name: run the full suite
+        run: ./run_tests.sh
+
+      - name: build the editorial
+        # The suite builds this too, but the PDF is a deliverable and not just an
+        # assertion, so it is uploaded as an artifact.
+        run: ./docs/build_editorial.sh
+
+      - name: upload the editorial
+        uses: actions/upload-artifact@v4
+        with:
+          name: editorial
+          path: docs/editorial.pdf
+
+  # The quick mode skips the full-limit run, so a green quick run is not proof
+  # the headline timings still hold.  This job re-measures them on every push and
+  # fails if the solution has stopped fitting the constraints.
+  limits:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: install build deps
+        run: sudo apt-get update && sudo apt-get install -y g++ python3
+
+      - name: build
+        run: ./build.sh
+
+      - name: the benchmark input must be legal
+        run: |
+          ./build/gen_random 250000 250000 1000000000 999999 7 > full.in
+          ./build/validate_input full.in
+
+      - name: the submission must fit the memory limit
+        run: |
+          /usr/bin/time -v ./build/sur < full.in > /dev/null 2> time.txt
+          peak_kb=$(grep 'Maximum resident' time.txt | grep -oE '[0-9]+')
+          echo "peak RSS: ${peak_kb} KB"
+          # 256 MB limit, with headroom for the allocator's own accounting.
+          if [ "$peak_kb" -gt 200000 ]; then
+            echo "::error::peak RSS ${peak_kb} KB is too close to the 256 MB limit"
+            exit 1
+          fi

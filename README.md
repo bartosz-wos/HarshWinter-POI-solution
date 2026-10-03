@@ -58,6 +58,23 @@ suites rather than 19 has not checked the editorial — the count is the tell.
 generated and not committed. `4ocen` is regenerated
 on demand rather than committed: it is 5.5 MB, almost all of it a station list.
 
+## Continuous integration
+
+`.github/workflows/verify.yml` runs on every push and does two jobs:
+
+- **verify** — the full suite plus an editorial build, uploaded as an artifact.
+- **limits** — regenerates the full-limit benchmark, asserts it is a legal
+  input, and fails if the submission's peak RSS approaches the 256 MB limit.
+  Quick mode skips the full-limit run, so a green quick run is not by itself
+  proof the headline timings still hold; this job is what keeps them honest.
+
+The suite is the only thing in this repo that can catch a wrong claim, which is
+why the interesting bugs found here were all found by running it rather than by
+reading the code. It earned its keep twice: the oracle test once compared an
+empty list against its expectations and reported `0 / 68706` while running its
+comparison loop zero times, and the multi-day tests never invoked the submission
+at all. Both hid behind a green run.
+
 ## Verification
 
 | Check | Result |
