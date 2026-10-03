@@ -36,7 +36,16 @@ echo "==> compiling editorial.typ"
 typst compile editorial.typ editorial.pdf
 
 echo "==> editorial.pdf: $(ls -lh editorial.pdf | awk '{print $5}')"
-if command -v python3 >/dev/null && python3 -c "import pymupdf" 2>/dev/null; then
+# Every check in here is load-bearing: they are what stopped a malformed
+# complexity formula, a figure caption that contradicted the model, and a
+# measurement taken from an illegal input.  So a missing dependency must be
+# loud, not a silent skip -- this guard used to hide every assertion at once.
+if ! python3 -c "import pymupdf" 2>/dev/null; then
+  echo "FATAL: pymupdf is not importable, so none of the PDF content checks run." >&2
+  echo "       pip install pymupdf" >&2
+  exit 1
+fi
+if command -v python3 >/dev/null; then
   python3 - <<'PY'
 import os
 import pymupdf

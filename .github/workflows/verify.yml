@@ -32,7 +32,22 @@ jobs:
             | sudo tar -xJ -C /usr/local/bin --strip-components=1
 
       - name: run the full suite
-        run: ./run_tests.sh
+        # tee + pipefail, so the log survives the failure.  The job log endpoint
+        # needs admin rights, which is exactly why a plain failing step left me
+        # unable to tell which suite broke; the artifact is readable by anyone
+        # with the repo.
+        run: |
+          set -o pipefail
+          ./run_tests.sh 2>&1 | tee suite.log
+        if: always()
+
+      - name: upload the suite log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: suite-log
+          path: suite.log
+          if-no-files-found: warn
 
       - name: build the editorial
         # The suite builds this too, but the PDF is a deliverable and not just an
