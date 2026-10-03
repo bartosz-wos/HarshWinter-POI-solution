@@ -45,25 +45,35 @@ bash -n "$0" || { echo "run_tests.sh has a syntax error"; exit 1; }
 
 # Byte-compile every test up front.  A NameError at import time otherwise shows
 # up mid-run, after the expensive suites have already burned their time.
-echo "== checking the tests import"
+echo "== checking the tests parse"
 python3 -m compileall -q tests generators >/dev/null || {
   echo "a test or generator has a syntax error"; exit 1; }
-for t in tests/test_*.py; do
-  python3 - "$t" <<'PY' || exit 1
-import importlib.util, sys
-p = sys.argv[1]
-spec = importlib.util.spec_from_file_location("_probe", p)
-# Import only up to the driver: execute the module preamble, which is where a
-# bad path constant or missing import lives, without running the whole suite.
-src = open(p).read()
-head = src.split("\nrng = ")[0].split("\nif __name__")[0]
-g = {"__name__": "_probe", "__file__": p}
-exec(compile(head, p, "exec"), g)
-PY
-done
 
+# Each test is then *imported* to catch a bad import or path constant.  This has
+# to happen after build.sh, not before: several tests run a solver at module
+# level, so importing them with an empty build/ dies on FileNotFoundError before
+# anything has been compiled.  The previous version tried to avoid that by
+# exec'ing only a string-split "preamble" up to a "rng =" or "__main__" marker,
+# which is not a real boundary -- test_exhaustive.py has neither marker, so the
+# whole test ran here, ~2000 solver invocations, and only passed on machines
+# where build/ happened to already exist.  A clean checkout failed.
 echo "== building"
 ./build.sh >/dev/null || { echo "build failed"; exit 1; }
+
+echo "== checking the tests import"
+for t in tests/test_*.py; do
+  python3 - "$t" <<'PY' || exit 1
+import importlib.util, sys, runpy
+p = sys.argv[1]
+# Run as a module so __name__ == "__main__" is NOT set; a test that executes at
+# import time then does not run its driver, while every top-level import,
+# constant and path is still exercised.
+spec = importlib.util.spec_from_file_location("_probe", p)
+m = importlib.util.module_from_spec(spec)
+sys.modules["_probe"] = m
+spec.loader.exec_module(m)
+PY
+done
 
 # The editorial is part of the repository, so it is built and checked like any
 # other artifact.  It is skipped, not failed, where typst is not installed.

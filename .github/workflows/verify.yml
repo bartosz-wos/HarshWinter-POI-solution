@@ -22,9 +22,15 @@ jobs:
           # the bash keyword does not accept -f, so without this the full-suite
           # job fails at the full-limit benchmark with no obvious cause.
           sudo apt-get install -y g++ python3 python3-pip time
-          pip install --user pymupdf
+          # PEP 668: Ubuntu 24.04's pip refuses an install into the system
+          # environment, so a bare `pip install --user pymupdf` exits 1 and
+          # pymupdf never lands anywhere importable.  That is what failed the
+          # verify job three times while the step itself still reported success.
+          pip install --break-system-packages pymupdf
           # Fail loudly here rather than 6 minutes into the suite.
           /usr/bin/time -f "%e" true >/dev/null
+          python3 -c "import pymupdf" || { echo "::error::pymupdf not importable"; exit 1; }
+          typst --version
 
       - name: install typst
         run: |
