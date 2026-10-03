@@ -30,12 +30,16 @@ jobs:
           # Fail loudly here rather than 6 minutes into the suite.
           /usr/bin/time -f "%e" true >/dev/null
           python3 -c "import pymupdf" || { echo "::error::pymupdf not importable"; exit 1; }
-          typst --version
 
       - name: install typst
         run: |
           curl -fsSL https://github.com/typst/typst/releases/latest/download/typst-x86_64-unknown-linux-musl.tar.xz \
             | sudo tar -xJ -C /usr/local/bin --strip-components=1
+          # Verified here, where typst is actually installed.  An earlier
+          # version put this check in the previous step, which runs before
+          # typst exists, so it failed every run for a reason unrelated to
+          # anything it was meant to check.
+          typst --version
 
       - name: run the full suite
         # tee + pipefail, so the log survives the failure.  The job log endpoint
