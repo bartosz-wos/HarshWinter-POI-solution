@@ -10,6 +10,20 @@ set -uo pipefail
 cd "$(dirname "$0")"
 
 MODE=${1:-all}
+
+# Preflight.  A missing external tool used to surface as a bare "exit 127"
+# several suites in, with nothing pointing at the cause.  /usr/bin/time in
+# particular is a separate package on both Fedora and Ubuntu, and the bash
+# keyword does not accept the -f the suite passes it.
+for need in g++ python3; do
+  command -v "$need" >/dev/null || { echo "FATAL: $need not found in PATH"; exit 127; }
+done
+if [ "$MODE" != "quick" ] && [ ! -x /usr/bin/time ]; then
+  echo "FATAL: /usr/bin/time is missing (package 'time' on Fedora and Ubuntu)."
+  echo "       It is required by the full-limit benchmark; 'quick' skips it."
+  exit 127
+fi
+
 FAILED=()
 SKIPPED=()
 run() {                     # run <name> <command...>

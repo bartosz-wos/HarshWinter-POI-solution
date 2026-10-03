@@ -26,8 +26,12 @@ limit.
 ./run_tests.sh quick            # skips the 7 expensive suites below "overflow audit"
 ```
 
-Only `g++` (C++20) and `python3` are needed for the solution and its tests. No
-network, no dependencies.
+Only `g++` (C++20), `python3` and GNU `time` are needed for the solution and its
+tests. No network, no dependencies. `time` is a separate package on both Fedora
+(`dnf install time`) and Ubuntu (`apt install time`) and is **not** present on a
+bare container; the full-limit benchmark calls `/usr/bin/time -f`, and the bash
+keyword does not accept `-f`, so its absence surfaces as a bare `exit 127`.
+`run_tests.sh` now checks for it up front and says so.
 
 Building the **editorial** additionally needs `typst` and `pymupdf`. Without them
 `run_tests.sh` prints `editorial: SKIP` and continues, so a run reporting 18
